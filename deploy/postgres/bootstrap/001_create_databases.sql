@@ -1,0 +1,2 @@
+-- Database creation is now handled by each PostgreSQL service through POSTGRES_DB.
+-- See deploy/docker-compose.yml for per-service database names and ports.

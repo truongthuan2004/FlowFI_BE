@@ -1,0 +1,215 @@
+services:
+  auth-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-flowfi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-74780102}
+      POSTGRES_DB: ${AUTH_DB_NAME:-FlowFi_AuthUser}
+    ports:
+      - "6001:5432"
+    volumes:
+      - auth_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-flowfi} -d ${AUTH_DB_NAME:-FlowFi_AuthUser}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  finance-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-flowfi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-74780102}
+      POSTGRES_DB: ${FINANCE_DB_NAME:-FlowFi_FinanceCore}
+    ports:
+      - "6002:5432"
+    volumes:
+      - finance_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-flowfi} -d ${FINANCE_DB_NAME:-FlowFi_FinanceCore}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ai-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-flowfi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-74780102}
+      POSTGRES_DB: ${AI_DB_NAME:-FlowFi_AIProcessing}
+    ports:
+      - "6000:5432"
+    volumes:
+      - ai_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-flowfi} -d ${AI_DB_NAME:-FlowFi_AIProcessing}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  analytics-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-flowfi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-74780102}
+      POSTGRES_DB: ${ANALYTICS_DB_NAME:-FlowFi_Analytics}
+    ports:
+      - "6003:5432"
+    volumes:
+      - analytics_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-flowfi} -d ${ANALYTICS_DB_NAME:-FlowFi_Analytics}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  notification-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-flowfi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-74780102}
+      POSTGRES_DB: ${NOTIFICATION_DB_NAME:-FlowFi_Notification}
+    ports:
+      - "6004:5432"
+    volumes:
+      - notification_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-flowfi} -d ${NOTIFICATION_DB_NAME:-FlowFi_Notification}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-flowfi}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-flowfi_dev_password}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    build:
+      context: ..
+      dockerfile: src/FlowFi.AuthUserService/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: Host=auth-db;Port=5432;Database=${AUTH_DB_NAME:-FlowFi_AuthUser};Username=${POSTGRES_USER:-flowfi};Password=${POSTGRES_PASSWORD:-74780102}
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: ${RABBITMQ_USER:-flowfi}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:-flowfi_dev_password}
+      Jwt__Issuer: ${JWT_ISSUER:-FlowFi}
+      Jwt__Audience: ${JWT_AUDIENCE:-FlowFi.Clients}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:-CHANGE_ME_USE_AT_LEAST_32_CHARS_FOR_DEV}
+    ports:
+      - "5101:8080"
+    depends_on:
+      auth-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  finance-service:
+    build:
+      context: ..
+      dockerfile: src/FlowFi.FinanceCoreService/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: Host=finance-db;Port=5432;Database=${FINANCE_DB_NAME:-FlowFi_FinanceCore};Username=${POSTGRES_USER:-flowfi};Password=${POSTGRES_PASSWORD:-74780102}
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: ${RABBITMQ_USER:-flowfi}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:-flowfi_dev_password}
+    ports:
+      - "5102:8080"
+    depends_on:
+      finance-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  ai-service:
+    build:
+      context: ..
+      dockerfile: src/FlowFi.AIProcessingService/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: Host=ai-db;Port=5432;Database=${AI_DB_NAME:-FlowFi_AIProcessing};Username=${POSTGRES_USER:-flowfi};Password=${POSTGRES_PASSWORD:-74780102}
+    ports:
+      - "5103:8080"
+    depends_on:
+      ai-db:
+        condition: service_healthy
+
+  analytics-service:
+    build:
+      context: ..
+      dockerfile: src/FlowFi.AnalyticsService/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: Host=analytics-db;Port=5432;Database=${ANALYTICS_DB_NAME:-FlowFi_Analytics};Username=${POSTGRES_USER:-flowfi};Password=${POSTGRES_PASSWORD:-74780102}
+    ports:
+      - "5104:8080"
+    depends_on:
+      analytics-db:
+        condition: service_healthy
+
+  notification-service:
+    build:
+      context: ..
+      dockerfile: src/FlowFi.NotificationService/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: Host=notification-db;Port=5432;Database=${NOTIFICATION_DB_NAME:-FlowFi_Notification};Username=${POSTGRES_USER:-flowfi};Password=${POSTGRES_PASSWORD:-74780102}
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: ${RABBITMQ_USER:-flowfi}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:-flowfi_dev_password}
+    ports:
+      - "5105:8080"
+    depends_on:
+      notification-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  websocket-gateway:
+    build:
+      context: ..
+      dockerfile: src/FlowFi.WebSocketGateway/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      Jwt__Issuer: ${JWT_ISSUER:-FlowFi}
+      Jwt__Audience: ${JWT_AUDIENCE:-FlowFi.Clients}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:-CHANGE_ME_USE_AT_LEAST_32_CHARS_FOR_DEV}
+    ports:
+      - "5106:8080"
+
+  api-gateway:
+    build:
+      context: ..
+      dockerfile: src/FlowFi.ApiGateway/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      Jwt__Issuer: ${JWT_ISSUER:-FlowFi}
+      Jwt__Audience: ${JWT_AUDIENCE:-FlowFi.Clients}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:-CHANGE_ME_USE_AT_LEAST_32_CHARS_FOR_DEV}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - auth-service
+      - finance-service
+      - ai-service
+      - analytics-service
+      - notification-service
+      - websocket-gateway
+
+volumes:
+  auth_db_data:
+  finance_db_data:
+  ai_db_data:
+  analytics_db_data:
+  notification_db_data:

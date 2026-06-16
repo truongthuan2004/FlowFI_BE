@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "FlowFi.AuthUserService": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:50816;http://localhost:50825"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="../../shared/FlowFi.Contracts/FlowFi.Contracts.csproj" />
+    <ProjectReference Include="../../shared/FlowFi.Common/FlowFi.Common.csproj" />
+    <ProjectReference Include="../../shared/FlowFi.EventBus/FlowFi.EventBus.csproj" />
+  </ItemGroup>
+</Project>

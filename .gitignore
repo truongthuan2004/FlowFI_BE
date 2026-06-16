@@ -1,0 +1,11 @@
+bin/
+obj/
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.nupkg
+.env
+Dockerfile.user
+docker-compose.override.yml
