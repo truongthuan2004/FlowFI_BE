@@ -8,11 +8,12 @@ public static class PostgresServiceCollectionExtensions
 {
     public static IServiceCollection AddFlowFiPostgres<TContext>(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        string connectionStringName = "Default")
         where TContext : DbContext
     {
-        var connectionString = configuration.GetConnectionString("Default")
-            ?? throw new InvalidOperationException("ConnectionStrings:Default is required.");
+        var connectionString = configuration.GetConnectionString(connectionStringName)
+            ?? throw new InvalidOperationException($"ConnectionStrings:{connectionStringName} is required.");
 
         services.AddDbContext<TContext>(options => options
             .UseNpgsql(connectionString)
@@ -21,4 +22,3 @@ public static class PostgresServiceCollectionExtensions
         return services;
     }
 }
-

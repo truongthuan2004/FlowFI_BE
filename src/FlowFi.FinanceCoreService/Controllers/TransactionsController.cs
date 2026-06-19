@@ -1,24 +1,67 @@
-using FlowFi.FinanceCoreService.Entities;
-using FlowFi.FinanceCoreService.Interface;
+using FlowFi.Common.Api;
+using FlowFi.FinanceCoreService.DTOs;
+using FlowFi.FinanceCoreService.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlowFi.FinanceCoreService.Controllers;
 
+[Authorize]
 [ApiController]
-[Route("transactions")]
-public sealed class TransactionsController(IFinanceService financeService) : ControllerBase
+[Route("api/wallets/{walletId:guid}/transactions")]
+public class TransactionsController : ControllerBase
 {
-    [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<Transaction>>> Get(Guid userId, CancellationToken cancellationToken)
+    private readonly ITransactionService _transactionService;
+
+    public TransactionsController(ITransactionService transactionService)
     {
-        return Ok(await financeService.GetTransactionsAsync(userId, cancellationToken));
+        _transactionService = transactionService;
     }
 
     [HttpPost]
-    public async Task<ActionResult<Transaction>> Create(Transaction transaction, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(TransactionDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<TransactionDto>> Create(
+        Guid walletId,
+        CreateTransactionDto request,
+        CancellationToken cancellationToken)
     {
-        var created = await financeService.CreateTransactionAsync(transaction, cancellationToken);
-        return Created($"/transactions/{created.Id}", created);
+        var userId = User.UserId();
+        if (userId == Guid.Empty)
+        {
+            return Unauthorized(new
+            {
+                message = "The access token does not contain a valid user identifier."
+            });
+        }
+
+        if (walletId == Guid.Empty)
+        {
+            return BadRequest(new { message = "WalletId must be a valid non-empty UUID." });
+        }
+
+        var result = await _transactionService.CreateAsync(
+            userId,
+            walletId,
+            request,
+            cancellationToken);
+
+        return result.Status switch
+        {
+            CreateTransactionStatus.WalletNotFound =>
+                NotFound(new { message = "Wallet was not found." }),
+            CreateTransactionStatus.WalletInactive =>
+                Conflict(new { message = "Wallet is inactive." }),
+            CreateTransactionStatus.TagNotFound =>
+                NotFound(new { message = "Tag was not found." }),
+            CreateTransactionStatus.TagTypeMismatch =>
+                BadRequest(new { message = "Tag type must match transaction type." }),
+            CreateTransactionStatus.InsufficientBalance =>
+                Conflict(new { message = "Wallet balance is insufficient." }),
+            _ => StatusCode(StatusCodes.Status201Created, result.Transaction)
+        };
     }
 }
-

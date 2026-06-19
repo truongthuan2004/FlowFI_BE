@@ -3,10 +3,13 @@ obj/
 .vs/
 .idea/
 .vscode/
+.cursor/
 *.user
 *.suo
 *.nupkg
 .env
+.env.*
+!.env.example
 Dockerfile.user
 docker-compose.override.yml
 /docs/internal/

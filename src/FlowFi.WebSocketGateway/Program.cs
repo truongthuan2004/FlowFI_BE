@@ -1,5 +1,8 @@
 using FlowFi.Common.Authentication;
+using FlowFi.Common.Configuration;
 using Microsoft.AspNetCore.SignalR;
+
+EnvironmentFile.Load("WEBSOCKET");
 
 var builder = WebApplication.CreateBuilder(args);
 

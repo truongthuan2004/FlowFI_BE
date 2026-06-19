@@ -6,6 +6,9 @@ using FlowFi.ApiGateway.RateLimiting;
 using FlowFi.ApiGateway.RequestLogging;
 using FlowFi.ApiGateway.Routing;
 using FlowFi.ApiGateway.Swagger;
+using FlowFi.Common.Configuration;
+
+EnvironmentFile.Load("GATEWAY");
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,4 +43,3 @@ app.MapGatewayAggregation();
 app.MapGatewayRoutes();
 
 app.Run();
-

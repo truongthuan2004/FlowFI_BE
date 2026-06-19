@@ -1,8 +1,15 @@
 using FlowFi.AIProcessingService.Config;
+using FlowFi.Common.Configuration;
 using FlowFi.Common.Middleware;
 using FlowFi.Common.OpenApi;
 
+EnvironmentFile.Load("AI");
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 builder.Services.AddAiService(builder.Configuration);
 

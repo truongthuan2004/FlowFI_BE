@@ -1,0 +1,103 @@
+﻿using FlowFi.FinanceCoreService.DTOs;
+using FlowFi.FinanceCoreService.Entities;
+using FlowFi.FinanceCoreService.Repositories;
+
+namespace FlowFi.FinanceCoreService.Services;
+
+public class TagService : ITagService
+{
+    private readonly ITagRepository _tagRepository;
+
+    public TagService(ITagRepository tagRepository)
+    {
+        _tagRepository = tagRepository;
+    }
+
+    public async Task<IReadOnlyList<TagDto>> GetAllAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var tags = await _tagRepository.GetAllAsync(cancellationToken);
+        return tags.Select(MapToDto).ToList();
+    }
+
+    public async Task<TagDto?> GetByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var tag = await _tagRepository.GetByIdAsync(id, cancellationToken);
+        return tag is null ? null : MapToDto(tag);
+    }
+
+    public async Task<TagDto> CreateAsync(
+        CreateTagDto request,
+        CancellationToken cancellationToken = default)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var tag = new Tag
+        {
+            Id = Guid.NewGuid(),
+            UserId = request.UserId,
+            Name = request.Name.Trim(),
+            Type = request.Type.Trim(),
+            Icon = request.Icon.Trim(),
+            Color = request.Color.Trim(),
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        var createdTag = await _tagRepository.AddAsync(tag, cancellationToken);
+        return MapToDto(createdTag);
+    }
+
+    public async Task<TagDto?> UpdateAsync(
+        Guid id,
+        UpdateTagDto request,
+        CancellationToken cancellationToken = default)
+    {
+        var tag = await _tagRepository.GetByIdAsync(id, cancellationToken);
+        if (tag is null)
+        {
+            return null;
+        }
+
+        tag.UserId = request.UserId;
+        tag.Name = request.Name.Trim();
+        tag.Type = request.Type.Trim();
+        tag.Icon = request.Icon.Trim();
+        tag.Color = request.Color.Trim();
+        tag.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _tagRepository.UpdateAsync(tag, cancellationToken);
+        return MapToDto(tag);
+    }
+
+    public async Task<bool> DeleteAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var tag = await _tagRepository.GetByIdAsync(id, cancellationToken);
+        if (tag is null)
+        {
+            return false;
+        }
+
+        await _tagRepository.DeleteAsync(tag, cancellationToken);
+        return true;
+    }
+
+    private static TagDto MapToDto(Tag tag)
+    {
+        return new TagDto
+        {
+            Id = tag.Id,
+            UserId = tag.UserId,
+            Name = tag.Name,
+            Type = tag.Type,
+            Icon = tag.Icon,
+            Color = tag.Color,
+            CreatedAt = tag.CreatedAt,
+            UpdatedAt = tag.UpdatedAt
+        };
+    }
+}
+

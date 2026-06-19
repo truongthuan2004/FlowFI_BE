@@ -1,8 +1,11 @@
 using FlowFi.AnalyticsService.Config;
 using FlowFi.AnalyticsService.Database;
+using FlowFi.Common.Configuration;
 using FlowFi.Common.Middleware;
 using FlowFi.Common.OpenApi;
 using Microsoft.EntityFrameworkCore;
+
+EnvironmentFile.Load("ANALYTICS");
 
 var builder = WebApplication.CreateBuilder(args);
 

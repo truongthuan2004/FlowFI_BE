@@ -5,8 +5,21 @@ namespace FlowFi.NotificationService.Interface;
 
 public interface INotificationService
 {
-    Task<IReadOnlyList<Notification>> GetNotificationsAsync(Guid userId, CancellationToken cancellationToken);
-    Task<Notification> CreateNotificationAsync(CreateNotificationRequest request, CancellationToken cancellationToken);
-    Task<PushDevice> RegisterDeviceAsync(PushDevice device, CancellationToken cancellationToken);
-}
+    // Notifications
+    Task<PagedNotificationsResponse> GetNotificationsAsync(Guid userId, int page, int pageSize, bool? isRead, string? type, string? channel, CancellationToken cancellationToken);
+    Task<GetUnreadCountResponse> GetUnreadCountAsync(Guid userId, CancellationToken cancellationToken);
+    Task<NotificationDto> CreateNotificationAsync(CreateNotificationRequest request, CancellationToken cancellationToken);
+    Task<NotificationDto?> GetNotificationAsync(Guid userId, Guid id, CancellationToken cancellationToken);
+    Task MarkAsReadAsync(Guid userId, Guid id, CancellationToken cancellationToken);
+    Task<int> MarkAllAsReadAsync(Guid userId, CancellationToken cancellationToken);
+    Task DeleteAsync(Guid userId, Guid id, CancellationToken cancellationToken);
 
+    // Devices
+    Task<PushDevice> RegisterDeviceAsync(PushDevice device, CancellationToken cancellationToken);
+    Task<DeviceSyncState> SyncDeviceAsync(DeviceSyncRequest request, CancellationToken cancellationToken);
+    Task<IReadOnlyList<Notification>> GetUndeliveredNotificationsAsync(Guid userId, string deviceFingerprint, DateTimeOffset since, CancellationToken cancellationToken);
+
+    // Settings
+    Task<NotificationSettingsDto?> GetSettingsAsync(Guid userId, CancellationToken cancellationToken);
+    Task<NotificationSettingsDto> UpdateSettingsAsync(Guid userId, UpdateNotificationSettingsRequest request, CancellationToken cancellationToken);
+}
