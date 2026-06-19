@@ -18,5 +18,10 @@ public static class FlowFiMiddlewareExtensions
     {
         return app.UseMiddleware<FlowFiRequestLoggingMiddleware>();
     }
+
+    public static IApplicationBuilder UseFlowFiStatusCodeEnvelope(this IApplicationBuilder app)
+    {
+        return app.UseMiddleware<FlowFiStatusCodeEnvelopeMiddleware>();
+    }
 }
 

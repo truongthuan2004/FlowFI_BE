@@ -9,3 +9,4 @@ obj/
 .env
 Dockerfile.user
 docker-compose.override.yml
+/docs/internal/

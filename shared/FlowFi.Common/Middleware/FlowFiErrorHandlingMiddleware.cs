@@ -1,4 +1,5 @@
 using System.Net;
+using FlowFi.Common.Api;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
@@ -30,15 +31,12 @@ public sealed class FlowFiErrorHandlingMiddleware(
 
             context.Response.Clear();
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-            context.Response.ContentType = "application/problem+json";
+            context.Response.ContentType = "application/json";
 
-            await context.Response.WriteAsJsonAsync(new
-            {
-                type = "https://httpstatuses.com/500",
-                title = "Internal service error",
-                status = 500,
-                traceId = context.TraceIdentifier
-            });
+            await context.Response.WriteAsJsonAsync(FlowFiApiEnvelope.Fail(
+                "Internal service error.",
+                null,
+                context.TraceIdentifier));
         }
     }
 }
