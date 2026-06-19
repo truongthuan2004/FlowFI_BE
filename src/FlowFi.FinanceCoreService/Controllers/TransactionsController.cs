@@ -1,24 +1,38 @@
-using FlowFi.FinanceCoreService.Entities;
-using FlowFi.FinanceCoreService.Interface;
+﻿using FlowFi.FinanceCoreService.DTOs;
+using FlowFi.FinanceCoreService.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlowFi.FinanceCoreService.Controllers;
 
 [ApiController]
-[Route("transactions")]
-public sealed class TransactionsController(IFinanceService financeService) : ControllerBase
+[Route("api/[controller]")]
+public class TransactionsController : ControllerBase
 {
-    [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<Transaction>>> Get(Guid userId, CancellationToken cancellationToken)
+    private readonly ITransactionService _transactionService;
+
+    public TransactionsController(ITransactionService transactionService)
     {
-        return Ok(await financeService.GetTransactionsAsync(userId, cancellationToken));
+        _transactionService = transactionService;
     }
 
     [HttpPost]
-    public async Task<ActionResult<Transaction>> Create(Transaction transaction, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(TransactionDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TransactionDto>> Create(
+        CreateTransactionDto request,
+        CancellationToken cancellationToken)
     {
-        var created = await financeService.CreateTransactionAsync(transaction, cancellationToken);
-        return Created($"/transactions/{created.Id}", created);
+        var result = await _transactionService.CreateAsync(request, cancellationToken);
+
+        return result.Status switch
+        {
+            CreateTransactionStatus.WalletNotFound =>
+                NotFound(new { message = "Wallet was not found." }),
+            CreateTransactionStatus.TagNotFound =>
+                NotFound(new { message = "Tag was not found." }),
+            _ => StatusCode(StatusCodes.Status201Created, result.Transaction)
+        };
     }
 }
 
