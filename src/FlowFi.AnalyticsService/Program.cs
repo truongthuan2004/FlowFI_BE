@@ -23,6 +23,7 @@ app.UseFlowFiRequestLogging();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseFlowFiSwagger();
+app.UseFlowFiStatusCodeEnvelope();
 
 app.MapGet("/", () => Results.Redirect("/swagger"));
 app.MapHealthChecks("/health");
