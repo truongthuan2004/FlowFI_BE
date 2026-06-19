@@ -35,6 +35,7 @@ public sealed class AuthService(
             AuthProvider = "LOCAL",
             IsVerified = false,
             CurrencyCode = "VND",
+            Role = UserRoles.User,
             CreatedAt = DateTimeOffset.UtcNow
         };
 
@@ -42,7 +43,7 @@ public sealed class AuthService(
 
         // Create tokens
         var refreshToken = await CreateRefreshTokenAsync(user.Id, cancellationToken);
-        var tokens = CreateTokens(user.Id, refreshToken.Token);
+        var tokens = CreateTokens(user.Id, refreshToken.Token, user.Role);
 
         // Log
         await AddUserLogAsync(user.Id, "REGISTER", "SUCCESS", null, null, null, cancellationToken);
@@ -69,7 +70,7 @@ public sealed class AuthService(
         }
 
         var refreshToken = await CreateRefreshTokenAsync(user.Id, cancellationToken);
-        var tokens = CreateTokens(user.Id, refreshToken.Token);
+        var tokens = CreateTokens(user.Id, refreshToken.Token, user.Role);
 
         await AddUserLogAsync(user.Id, "LOGIN", "SUCCESS", null, null, null, cancellationToken);
 
@@ -92,7 +93,10 @@ public sealed class AuthService(
         // Revoke old token
         await users.RevokeRefreshTokenAsync(request.RefreshToken, cancellationToken);
 
-        return CreateTokens(refreshToken.UserId, newToken.Token);
+        var user = await users.GetUserAsync(refreshToken.UserId, cancellationToken)
+            ?? throw new InvalidOperationException("USER_NOT_FOUND");
+
+        return CreateTokens(refreshToken.UserId, newToken.Token, user.Role);
     }
 
     public async Task LogoutAsync(LogoutRequest request, CancellationToken cancellationToken)
@@ -127,6 +131,19 @@ public sealed class AuthService(
 
         await users.AddPasswordResetTokenAsync(resetToken, cancellationToken);
         await AddUserLogAsync(user.Id, "FORGOT_PASSWORD", "SUCCESS", null, null, null, cancellationToken);
+
+        // Publish event to send email
+        try
+        {
+            await publisher.PublishAsync("auth.password-reset-requested", new PasswordResetRequested(
+                user.Id,
+                user.Email,
+                user.FullName ?? "User",
+                resetToken.Token,
+                resetToken.OtpCode
+            ), cancellationToken);
+        }
+        catch { }
     }
 
     public async Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken)
@@ -223,12 +240,13 @@ public sealed class AuthService(
         return await users.AddRefreshTokenAsync(token, cancellationToken);
     }
 
-    private AuthTokensDto CreateTokens(Guid userId, string refreshToken)
+    private AuthTokensDto CreateTokens(Guid userId, string refreshToken, string role)
     {
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
-            new Claim("sub", userId.ToString())
+            new Claim("sub", userId.ToString()),
+            new Claim(ClaimTypes.Role, role)
         };
 
         return new AuthTokensDto(
@@ -248,6 +266,7 @@ public sealed class AuthService(
         user.MonthlyBudgetLimit,
         user.AuthProvider,
         user.IsVerified,
+        user.Role,
         user.CreatedAt);
 
     private async Task AddUserLogAsync(Guid userId, string action, string status, string? ipAddress, string? userAgent, string? failureReason, CancellationToken cancellationToken)

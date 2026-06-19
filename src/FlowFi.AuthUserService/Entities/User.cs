@@ -16,6 +16,7 @@ public sealed class User
 
     public string AuthProvider { get; set; } = "LOCAL";
     public bool IsVerified { get; set; }
+    public string Role { get; set; } = UserRoles.User;
 
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }

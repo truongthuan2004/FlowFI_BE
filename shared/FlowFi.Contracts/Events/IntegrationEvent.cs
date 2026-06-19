@@ -13,4 +13,5 @@ public sealed record WalletTransferred(Guid UserId, Guid SourceWalletId, Guid De
 public sealed record BudgetExceeded(Guid UserId, Guid BudgetId, decimal CurrentAmount, decimal LimitAmount) : IntegrationEvent;
 public sealed record GoalProgressUpdated(Guid UserId, Guid GoalId, decimal ProgressPercent) : IntegrationEvent;
 public sealed record NotificationRequested(Guid UserId, string Channel, string Subject, string Body) : IntegrationEvent;
+public sealed record PasswordResetRequested(Guid UserId, string Email, string FullName, string Token, string OtpCode) : IntegrationEvent;
 

@@ -16,6 +16,7 @@ public sealed record UserDto(
     decimal? MonthlyBudgetLimit,
     string AuthProvider,
     bool IsVerified,
+    string Role,
     DateTimeOffset CreatedAt);
 
 public sealed record RegisterResponse(

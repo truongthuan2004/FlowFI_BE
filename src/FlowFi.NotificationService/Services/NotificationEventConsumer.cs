@@ -3,6 +3,7 @@ using System.Text.Json;
 using FlowFi.Contracts.Events;
 using FlowFi.NotificationService.DTOs;
 using FlowFi.NotificationService.Interface;
+using Microsoft.Extensions.Configuration;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
@@ -12,15 +13,18 @@ public sealed class NotificationEventConsumer : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<NotificationEventConsumer> _logger;
+    private readonly IConfiguration _configuration;
     private IConnection? _connection;
     private IModel? _channel;
 
     public NotificationEventConsumer(
         IServiceProvider serviceProvider,
-        ILogger<NotificationEventConsumer> logger)
+        ILogger<NotificationEventConsumer> logger,
+        IConfiguration configuration)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _configuration = configuration;
     }
 
     public override Task StartAsync(CancellationToken cancellationToken)
@@ -29,9 +33,9 @@ public sealed class NotificationEventConsumer : BackgroundService
         {
             var factory = new ConnectionFactory
             {
-                HostName = "localhost",
-                UserName = "guest",
-                Password = "guest"
+                HostName = _configuration["RabbitMq:Host"] ?? "localhost",
+                UserName = _configuration["RabbitMq:Username"] ?? "guest",
+                Password = _configuration["RabbitMq:Password"] ?? "guest"
             };
 
             _connection = factory.CreateConnection();
@@ -43,6 +47,7 @@ public sealed class NotificationEventConsumer : BackgroundService
             _channel.QueueBind("flowfi.notification-service", "flowfi.events", "transaction.#");
             _channel.QueueBind("flowfi.notification-service", "flowfi.events", "budget.#");
             _channel.QueueBind("flowfi.notification-service", "flowfi.events", "goal.#");
+            _channel.QueueBind("flowfi.notification-service", "flowfi.events", "auth.#");
 
             _logger.LogInformation("Notification Event Consumer started");
         }
@@ -144,6 +149,54 @@ public sealed class NotificationEventConsumer : BackgroundService
                     "NORMAL");
 
                 await notificationService.CreateNotificationAsync(request, cancellationToken);
+            }
+        }
+        else if (routingKey.StartsWith("auth."))
+        {
+            if (routingKey == "auth.password-reset-requested")
+            {
+                var resetEvent = JsonSerializer.Deserialize<PasswordResetRequested>(message, options);
+                if (resetEvent is not null)
+                {
+                    var subject = "Yêu cầu khôi phục mật khẩu";
+                    var currentYear = DateTime.UtcNow.Year.ToString();
+                    var body = $@"
+<div style=""font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; padding: 30px; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);"">
+    <div style=""text-align: center; margin-bottom: 25px;"">
+        <h2 style=""color: #4f46e5; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;"">FlowFi</h2>
+    </div>
+    <div style=""border-bottom: 1px solid #f0f0f0; padding-bottom: 20px; margin-bottom: 20px;"">
+        <h3 style=""color: #1f2937; margin-top: 0; font-size: 20px; font-weight: 600;"">Khôi phục mật khẩu tài khoản</h3>
+        <p style=""color: #4b5563; font-size: 15px; line-height: 1.6;"">Xin chào <strong>{resetEvent.FullName}</strong>,</p>
+        <p style=""color: #4b5563; font-size: 15px; line-height: 1.6;"">Chúng tôi nhận được yêu cầu khôi phục mật khẩu cho tài khoản của bạn tại hệ thống FlowFi. Vui lòng sử dụng mã OTP dưới đây để hoàn tất quá trình thiết lập lại mật khẩu:</p>
+    </div>
+    <div style=""text-align: center; margin: 30px 0;"">
+        <span style=""font-size: 32px; font-weight: 700; letter-spacing: 6px; background-color: #f3f4f6; color: #4f46e5; padding: 12px 30px; border-radius: 8px; border: 1px dashed #cbd5e1; display: inline-block;"">{resetEvent.OtpCode}</span>
+    </div>
+    <div style=""border-top: 1px solid #f0f0f0; padding-top: 20px; margin-top: 20px;"">
+        <p style=""color: #4b5563; font-size: 15px; line-height: 1.6;"">Hoặc bạn có thể nhấp trực tiếp vào đường dẫn dưới đây:</p>
+        <div style=""text-align: center; margin: 25px 0;"">
+            <a href=""http://localhost:5173/reset-password?email={Uri.EscapeDataString(resetEvent.Email)}&token={resetEvent.Token}"" style=""background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);"">Đặt lại mật khẩu</a>
+        </div>
+        <p style=""font-size: 13px; color: #ef4444; line-height: 1.5; margin-bottom: 0;""><strong>Lưu ý:</strong> Mã OTP và liên kết này chỉ có hiệu lực trong vòng 30 phút. Nếu bạn không yêu cầu hành động này, vui lòng bỏ qua email và bảo mật tài khoản của mình.</p>
+    </div>
+    <hr style=""border: 0; border-top: 1px solid #f0f0f0; margin: 30px 0 20px 0;"">
+    <p style=""font-size: 12px; color: #9ca3af; text-align: center; margin: 0;"">© {currentYear} FlowFi. Tất cả các quyền được bảo lưu.</p>
+</div>
+";
+                    var emailSender = scope.ServiceProvider.GetRequiredService<IEmailSender>();
+                    await emailSender.SendEmailAsync(resetEvent.Email, subject, body, isHtml: true, cancellationToken);
+
+                    var request = new CreateNotificationRequest(
+                        resetEvent.UserId,
+                        "Khôi phục mật khẩu",
+                        $"Yêu cầu khôi phục mật khẩu đã được gửi đến email {resetEvent.Email}.",
+                        "SYSTEM",
+                        "EMAIL",
+                        "HIGH");
+
+                    await notificationService.CreateNotificationAsync(request, cancellationToken);
+                }
             }
         }
     }
