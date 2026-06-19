@@ -139,6 +139,13 @@ services:
     environment:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Default: Host=ai-db;Port=5432;Database=${AI_DB_NAME:-FlowFi_AIProcessing};Username=${POSTGRES_USER:-flowfi};Password=${POSTGRES_PASSWORD:-74780102}
+      AiProvider__Provider: ${AI_PROVIDER:-GetNexAI}
+      AiProvider__BaseUrl: ${AI_PROVIDER_BASE_URL:-https://getnexai.net/api/v1}
+      AiProvider__ResponsesPath: ${AI_PROVIDER_RESPONSES_PATH:-/responses}
+      AiProvider__Model: ${AI_PROVIDER_MODEL:-gpt-5.5}
+      AiProvider__ApiKey: ${AI_PROVIDER_API_KEY:-}
+      AiProvider__ReasoningEffort: ${AI_PROVIDER_REASONING_EFFORT:-low}
+      AiProvider__Verbosity: ${AI_PROVIDER_VERBOSITY:-low}
     ports:
       - "5103:8080"
     depends_on:
