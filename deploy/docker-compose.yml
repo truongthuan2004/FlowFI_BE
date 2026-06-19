@@ -10,7 +10,11 @@ services:
     volumes:
       - auth_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-flowfi} -d ${AUTH_DB_NAME:-FlowFi_AuthUser}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-flowfi} -d ${AUTH_DB_NAME:-FlowFi_AuthUser}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,7 +30,11 @@ services:
     volumes:
       - finance_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-flowfi} -d ${FINANCE_DB_NAME:-FlowFi_FinanceCore}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-flowfi} -d ${FINANCE_DB_NAME:-FlowFi_FinanceCore}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -42,7 +50,11 @@ services:
     volumes:
       - ai_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-flowfi} -d ${AI_DB_NAME:-FlowFi_AIProcessing}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-flowfi} -d ${AI_DB_NAME:-FlowFi_AIProcessing}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -58,7 +70,11 @@ services:
     volumes:
       - analytics_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-flowfi} -d ${ANALYTICS_DB_NAME:-FlowFi_Analytics}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-flowfi} -d ${ANALYTICS_DB_NAME:-FlowFi_Analytics}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -74,7 +90,11 @@ services:
     volumes:
       - notification_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-flowfi} -d ${NOTIFICATION_DB_NAME:-FlowFi_Notification}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-flowfi} -d ${NOTIFICATION_DB_NAME:-FlowFi_Notification}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -151,11 +171,18 @@ services:
       dockerfile: src/FlowFi.AnalyticsService/Dockerfile
     environment:
       ASPNETCORE_URLS: http://+:8080
+      URLS: http://+:8080 # do nó đọc từ appsettings để bind vào nên để cái này lại đã xem mai mốt có fix .env ko để test
       ConnectionStrings__Default: Host=analytics-db;Port=5432;Database=${ANALYTICS_DB_NAME:-FlowFi_Analytics};Username=${POSTGRES_USER:-flowfi};Password=${POSTGRES_PASSWORD:-74780102}
+      Database__MigrateOnStartup: "true"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: ${RABBITMQ_USER:-flowfi}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:-flowfi_dev_password}
     ports:
       - "5104:8080"
     depends_on:
       analytics-db:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
 
   notification-service:
