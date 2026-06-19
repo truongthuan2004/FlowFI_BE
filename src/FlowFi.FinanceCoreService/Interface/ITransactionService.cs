@@ -5,6 +5,8 @@ namespace FlowFi.FinanceCoreService.Interface;
 public interface ITransactionService
 {
     Task<CreateTransactionResult> CreateAsync(
+        Guid userId,
+        Guid walletId,
         CreateTransactionDto request,
         CancellationToken cancellationToken = default);
 }

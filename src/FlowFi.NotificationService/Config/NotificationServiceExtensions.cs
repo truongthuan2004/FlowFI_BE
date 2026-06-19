@@ -18,6 +18,11 @@ public static class NotificationServiceExtensions
         services.AddSingleton<RabbitMqPublisher>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<INotificationService, Services.NotificationService>();
+        services.AddScoped<IEmailSender, EmailSender>();
+
+        // Add background service for consuming events
+        services.AddHostedService<NotificationEventConsumer>();
+
         services.AddControllers();
         services.AddFlowFiSwagger();
         return services;

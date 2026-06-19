@@ -14,6 +14,8 @@ public class TransactionService : ITransactionService
     }
 
     public async Task<CreateTransactionResult> CreateAsync(
+        Guid userId,
+        Guid walletId,
         CreateTransactionDto request,
         CancellationToken cancellationToken = default)
     {
@@ -22,16 +24,16 @@ public class TransactionService : ITransactionService
         var transaction = new Transaction
         {
             Id = Guid.NewGuid(),
-            UserId = request.UserId,
-            WalletId = request.WalletId,
+            UserId = userId,
+            WalletId = walletId,
             TagId = request.TagId,
             Amount = request.Amount,
             Type = type,
             Title = request.Title.Trim(),
             Note = request.Note.Trim(),
-            Source = request.Source.Trim(),
-            SyncStatus = request.SyncStatus.Trim(),
-            TransactionDate = request.TransactionDate,
+            Source = request.Source.Trim().ToUpperInvariant(),
+            SyncStatus = "SYNCED",
+            TransactionDate = now,
             CreatedAt = now,
             UpdatedAt = now
         };
@@ -46,8 +48,14 @@ public class TransactionService : ITransactionService
         {
             TransactionCreationStatus.WalletNotFound =>
                 new CreateTransactionResult(CreateTransactionStatus.WalletNotFound),
+            TransactionCreationStatus.WalletInactive =>
+                new CreateTransactionResult(CreateTransactionStatus.WalletInactive),
             TransactionCreationStatus.TagNotFound =>
                 new CreateTransactionResult(CreateTransactionStatus.TagNotFound),
+            TransactionCreationStatus.TagTypeMismatch =>
+                new CreateTransactionResult(CreateTransactionStatus.TagTypeMismatch),
+            TransactionCreationStatus.InsufficientBalance =>
+                new CreateTransactionResult(CreateTransactionStatus.InsufficientBalance),
             _ => new CreateTransactionResult(
                 CreateTransactionStatus.Success,
                 MapToDto(result.Transaction!))

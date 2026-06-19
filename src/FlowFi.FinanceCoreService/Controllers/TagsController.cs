@@ -1,9 +1,11 @@
 ﻿using FlowFi.FinanceCoreService.DTOs;
 using FlowFi.FinanceCoreService.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlowFi.FinanceCoreService.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class TagsController : ControllerBase

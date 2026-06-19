@@ -105,7 +105,7 @@ services:
       RabbitMq__Password: ${RABBITMQ_PASSWORD:-flowfi_dev_password}
       Jwt__Issuer: ${JWT_ISSUER:-FlowFi}
       Jwt__Audience: ${JWT_AUDIENCE:-FlowFi.Clients}
-      Jwt__SigningKey: ${JWT_SIGNING_KEY:-CHANGE_ME_USE_AT_LEAST_32_CHARS_FOR_DEV}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:-FlowFi_Dev_SigningKey_Must_Be_At_Least_32_Characters_Long}
     ports:
       - "5101:8080"
     depends_on:
@@ -191,7 +191,7 @@ services:
       ASPNETCORE_URLS: http://+:8080
       Jwt__Issuer: ${JWT_ISSUER:-FlowFi}
       Jwt__Audience: ${JWT_AUDIENCE:-FlowFi.Clients}
-      Jwt__SigningKey: ${JWT_SIGNING_KEY:-CHANGE_ME_USE_AT_LEAST_32_CHARS_FOR_DEV}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:-FlowFi_Dev_SigningKey_Must_Be_At_Least_32_Characters_Long}
     ports:
       - "5106:8080"
 
@@ -203,7 +203,7 @@ services:
       ASPNETCORE_URLS: http://+:8080
       Jwt__Issuer: ${JWT_ISSUER:-FlowFi}
       Jwt__Audience: ${JWT_AUDIENCE:-FlowFi.Clients}
-      Jwt__SigningKey: ${JWT_SIGNING_KEY:-CHANGE_ME_USE_AT_LEAST_32_CHARS_FOR_DEV}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:-FlowFi_Dev_SigningKey_Must_Be_At_Least_32_Characters_Long}
     ports:
       - "8080:8080"
     depends_on:
