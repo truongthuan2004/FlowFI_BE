@@ -4,6 +4,9 @@ public enum TransactionCreationStatus
 {
     Success,
     WalletNotFound,
-    TagNotFound
+    WalletInactive,
+    TagNotFound,
+    TagTypeMismatch,
+    InsufficientBalance
 }
 

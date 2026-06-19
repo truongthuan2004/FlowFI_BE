@@ -36,18 +36,36 @@ public class TransactionRepository : ITransactionRepository
                 return new TransactionCreationResult(TransactionCreationStatus.WalletNotFound);
             }
 
-            var tagExists = await _dbContext.Tags.AnyAsync(
+            if (!wallet.IsActive)
+            {
+                await databaseTransaction.RollbackAsync(cancellationToken);
+                return new TransactionCreationResult(TransactionCreationStatus.WalletInactive);
+            }
+
+            var tag = await _dbContext.Tags.SingleOrDefaultAsync(
                 tag => tag.Id == transaction.TagId && tag.UserId == transaction.UserId,
                 cancellationToken);
 
-            if (!tagExists)
+            if (tag is null)
             {
                 await databaseTransaction.RollbackAsync(cancellationToken);
                 return new TransactionCreationResult(TransactionCreationStatus.TagNotFound);
             }
 
+            if (!string.Equals(tag.Type, transaction.Type, StringComparison.OrdinalIgnoreCase))
+            {
+                await databaseTransaction.RollbackAsync(cancellationToken);
+                return new TransactionCreationResult(TransactionCreationStatus.TagTypeMismatch);
+            }
+
             var oldBalance = wallet.Balance;
             var newBalance = oldBalance + balanceChange;
+            if (newBalance < 0)
+            {
+                await databaseTransaction.RollbackAsync(cancellationToken);
+                return new TransactionCreationResult(TransactionCreationStatus.InsufficientBalance);
+            }
+
             wallet.Balance = newBalance;
             wallet.UpdatedAt = transaction.CreatedAt;
 

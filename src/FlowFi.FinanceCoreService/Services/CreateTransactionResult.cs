@@ -6,7 +6,10 @@ public enum CreateTransactionStatus
 {
     Success,
     WalletNotFound,
-    TagNotFound
+    WalletInactive,
+    TagNotFound,
+    TagTypeMismatch,
+    InsufficientBalance
 }
 
 public sealed record CreateTransactionResult(

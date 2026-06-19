@@ -13,7 +13,7 @@ public static class analyticserviceExtensions
 {
     public static IServiceCollection Addanalyticservice(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddFlowFiPostgres<ReportDbContext>(configuration, "ReportDb");
+        services.AddFlowFiPostgres<ReportDbContext>(configuration);
         services.AddFlowFiJwt(configuration);
         services.AddSingleton<RabbitMqPublisher>();
         services.AddScoped<IReportRepository, ReportRepository>();

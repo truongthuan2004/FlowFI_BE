@@ -4,6 +4,10 @@ using FlowFi.Common.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+
 builder.Services.AddAuthService(builder.Configuration);
 
 var app = builder.Build();

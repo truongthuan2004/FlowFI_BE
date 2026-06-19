@@ -11,12 +11,21 @@ var app = builder.Build();
 app.UseFlowFiErrorHandling();
 app.UseFlowFiCorrelationId();
 app.UseFlowFiRequestLogging();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseFlowFiSwagger();
+}
+
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseFlowFiSwagger();
 
-app.MapGet("/", () => Results.Redirect("/swagger"));
-app.MapHealthChecks("/health");
+if (app.Environment.IsDevelopment())
+{
+    app.MapGet("/", () => Results.Redirect("/swagger")).AllowAnonymous();
+}
+
+app.MapHealthChecks("/health").AllowAnonymous();
 app.MapControllers();
 
 app.Run();

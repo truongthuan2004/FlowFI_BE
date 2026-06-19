@@ -14,7 +14,7 @@ public static class AuthServiceExtensions
 {
     public static IServiceCollection AddAuthService(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddFlowFiPostgres<AuthDbContext>(configuration, "AuthDb");
+        services.AddFlowFiPostgres<AuthDbContext>(configuration);
         services.AddFlowFiJwt(configuration);
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<RabbitMqPublisher>();

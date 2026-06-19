@@ -9,7 +9,7 @@ public static class PostgresServiceCollectionExtensions
     public static IServiceCollection AddFlowFiPostgres<TContext>(
         this IServiceCollection services,
         IConfiguration configuration,
-        string connectionStringName)
+        string connectionStringName = "Default")
         where TContext : DbContext
     {
         var connectionString = configuration.GetConnectionString(connectionStringName)
