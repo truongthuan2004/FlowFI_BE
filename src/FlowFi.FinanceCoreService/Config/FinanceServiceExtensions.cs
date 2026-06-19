@@ -19,7 +19,7 @@ public static class FinanceServiceExtensions
         services.AddScoped<IFinanceRepository, FinanceRepository>();
         services.AddScoped<IFinanceService, Services.FinanceService>();
         services.AddControllers();
-        services.AddFlowFiSwagger();
+        services.AddFlowFiSwagger("FlowFi Finance Core Service");
         return services;
     }
 }

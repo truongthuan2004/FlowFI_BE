@@ -13,7 +13,7 @@ public static class NotificationServiceExtensions
 {
     public static IServiceCollection AddNotificationService(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddFlowFiPostgres<NotificationDbContext>(configuration);
+        services.AddFlowFiPostgres<NotificationDbContext>(configuration, "NotificationDb");
         services.AddFlowFiJwt(configuration);
         services.AddSingleton<RabbitMqPublisher>();
         services.AddScoped<INotificationRepository, NotificationRepository>();

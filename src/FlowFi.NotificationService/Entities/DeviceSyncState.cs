@@ -1,4 +1,12 @@
 namespace FlowFi.NotificationService.Entities;
 
-public sealed record DeviceSyncState(Guid Id, Guid UserId, string DeviceId, DateTimeOffset LastSyncedAt);
-
+public sealed class DeviceSyncState
+{
+    public Guid Id { get; set; }
+    public Guid UserId { get; set; }
+    public string DeviceFingerprint { get; set; } = string.Empty;
+    public DateTimeOffset LastSyncedAt { get; set; }
+    public string SyncStatus { get; set; } = "SUCCESS";
+    public string? ErrorMessage { get; set; }
+    public int RecordVersion { get; set; }
+}
