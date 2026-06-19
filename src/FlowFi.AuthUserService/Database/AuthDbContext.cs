@@ -16,6 +16,7 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbC
         // Users
         modelBuilder.Entity<User>().ToTable("users").HasKey(x => x.Id);
         modelBuilder.Entity<User>().HasIndex(x => x.Email).IsUnique();
+        modelBuilder.Entity<User>().Property(x => x.Role).HasDefaultValue("User").HasMaxLength(50);
 
         // Refresh Tokens
         modelBuilder.Entity<RefreshToken>().ToTable("refresh_tokens").HasKey(x => x.Id);
