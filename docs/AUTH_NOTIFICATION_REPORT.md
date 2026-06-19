@@ -146,7 +146,7 @@ Hai service này phục vụ **đăng nhập / quản lý tài khoản** và **t
 | Port | `6001` |
 | Database | `FlowFi_AuthUser` |
 | User | `flowfi` |
-| Password | `123456` |
+| Password | Xem biến `POSTGRES_PASSWORD` trong file `.env` local |
 
 ### Notification DB (cần setup)
 
@@ -156,7 +156,7 @@ Hai service này phục vụ **đăng nhập / quản lý tài khoản** và **t
 | Port | `6004` |
 | Database | `FlowFi_Notification` |
 | User | `flowfi` |
-| Password | Xem `appsettings.json` (hiện `74780102`) |
+| Password | Xem biến `POSTGRES_PASSWORD` trong file `.env` local |
 
 ### Chạy service
 

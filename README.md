@@ -32,10 +32,18 @@ FlowFi
 ## Run
 
 ```powershell
+Copy-Item .env.example .env
+# Update every CHANGE_ME value in .env before starting the system.
 .\scripts\build.ps1
-docker compose -f .\deploy\docker-compose.yml up --build
+docker compose --env-file .\.env -f .\deploy\docker-compose.yml up --build
 .\scripts\migrate.ps1
 ```
+
+All services load the root `.env` automatically when they run locally. Shared
+settings use the `FLOWFI_SHARED__` prefix, while service-specific settings use
+`FLOWFI_AUTH__`, `FLOWFI_FINANCE__`, `FLOWFI_AI__`, `FLOWFI_ANALYTICS__`,
+`FLOWFI_NOTIFICATION__`, `FLOWFI_WEBSOCKET__`, or `FLOWFI_GATEWAY__`.
+The real `.env` file is ignored by Git; only `.env.example` should be committed.
 
 API Gateway:
 
@@ -65,7 +73,7 @@ Each service has its own PostgreSQL container and can be tested directly:
 Run a single service for testing:
 
 ```powershell
-docker compose -f .\deploy\docker-compose.yml up --build ai-db ai-service
+docker compose --env-file .\.env -f .\deploy\docker-compose.yml up --build ai-db ai-service
 ```
 
 Then apply migrations:
@@ -74,10 +82,10 @@ Then apply migrations:
 .\scripts\migrate.ps1 -Service ai
 ```
 
-Or run a service directly with its own `appsettings.json`:
+Or run a service directly. It automatically loads the root `.env`:
 
 ```powershell
-docker compose -f .\deploy\docker-compose.yml up ai-db
+docker compose --env-file .\.env -f .\deploy\docker-compose.yml up ai-db
 .\scripts\migrate.ps1 -Service ai
 dotnet run --project .\src\FlowFi.AIProcessingService\FlowFi.AIProcessingService.csproj
 ```

@@ -1,6 +1,9 @@
 using FlowFi.AuthUserService.Config;
+using FlowFi.Common.Configuration;
 using FlowFi.Common.Middleware;
 using FlowFi.Common.OpenApi;
+
+EnvironmentFile.Load("AUTH");
 
 var builder = WebApplication.CreateBuilder(args);
 
