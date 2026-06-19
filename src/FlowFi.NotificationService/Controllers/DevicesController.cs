@@ -1,5 +1,5 @@
 using FlowFi.NotificationService.Entities;
-using FlowFi.NotificationService.Interface;
+using FlowFi.NotificationService.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlowFi.NotificationService.Controllers;

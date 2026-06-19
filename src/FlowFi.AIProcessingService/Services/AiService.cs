@@ -1,5 +1,5 @@
 using FlowFi.AIProcessingService.Entities;
-using FlowFi.AIProcessingService.Interface;
+using FlowFi.AIProcessingService.Interfaces;
 
 namespace FlowFi.AIProcessingService.Services;
 

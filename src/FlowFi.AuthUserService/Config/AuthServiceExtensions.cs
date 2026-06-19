@@ -1,5 +1,5 @@
 using FlowFi.AuthUserService.Database;
-using FlowFi.AuthUserService.Interface;
+using FlowFi.AuthUserService.Interfaces;
 using FlowFi.AuthUserService.Repositories;
 using FlowFi.AuthUserService.Services;
 using FlowFi.EventBus.Messaging;

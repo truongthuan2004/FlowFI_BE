@@ -1,5 +1,5 @@
 using FlowFi.AIProcessingService.Database;
-using FlowFi.AIProcessingService.Interface;
+using FlowFi.AIProcessingService.Interfaces;
 using FlowFi.AIProcessingService.Repositories;
 using FlowFi.AIProcessingService.Services;
 using FlowFi.Common.Persistence;

@@ -1,5 +1,5 @@
 using FlowFi.NotificationService.Database;
-using FlowFi.NotificationService.Interface;
+using FlowFi.NotificationService.Interfaces;
 using FlowFi.NotificationService.Repositories;
 using FlowFi.NotificationService.Services;
 using FlowFi.EventBus.Messaging;

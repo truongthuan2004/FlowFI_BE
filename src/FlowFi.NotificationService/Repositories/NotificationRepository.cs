@@ -1,6 +1,6 @@
 using FlowFi.NotificationService.Database;
 using FlowFi.NotificationService.Entities;
-using FlowFi.NotificationService.Interface;
+using FlowFi.NotificationService.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowFi.NotificationService.Repositories;

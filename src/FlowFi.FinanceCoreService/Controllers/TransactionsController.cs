@@ -1,5 +1,5 @@
 using FlowFi.FinanceCoreService.Entities;
-using FlowFi.FinanceCoreService.Interface;
+using FlowFi.FinanceCoreService.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlowFi.FinanceCoreService.Controllers;

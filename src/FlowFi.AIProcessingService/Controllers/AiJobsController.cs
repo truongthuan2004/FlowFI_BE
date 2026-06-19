@@ -1,5 +1,5 @@
 using FlowFi.AIProcessingService.Entities;
-using FlowFi.AIProcessingService.Interface;
+using FlowFi.AIProcessingService.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlowFi.AIProcessingService.Controllers;

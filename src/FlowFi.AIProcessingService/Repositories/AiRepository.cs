@@ -1,6 +1,6 @@
 using FlowFi.AIProcessingService.Database;
 using FlowFi.AIProcessingService.Entities;
-using FlowFi.AIProcessingService.Interface;
+using FlowFi.AIProcessingService.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowFi.AIProcessingService.Repositories;

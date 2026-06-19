@@ -1,6 +1,6 @@
 using FlowFi.AuthUserService.Database;
 using FlowFi.AuthUserService.Entities;
-using FlowFi.AuthUserService.Interface;
+using FlowFi.AuthUserService.Interfaces;
 
 namespace FlowFi.AuthUserService.Repositories;
 
