@@ -1,5 +1,5 @@
 using FlowFi.AnalyticsService.Database;
-using FlowFi.AnalyticsService.Interface;
+using FlowFi.AnalyticsService.Interfaces;
 using FlowFi.AnalyticsService.Repositories;
 using FlowFi.AnalyticsService.Services;
 using FlowFi.EventBus.Messaging;
@@ -9,15 +9,15 @@ using FlowFi.Common.OpenApi;
 
 namespace FlowFi.AnalyticsService.Config;
 
-public static class analyticserviceExtensions
+public static class AnalyticsServiceExtensions
 {
-    public static IServiceCollection Addanalyticservice(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddAnalyticsService(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddFlowFiPostgres<ReportDbContext>(configuration);
+        services.AddFlowFiPostgres<AnalyticsDbContext>(configuration);
         services.AddFlowFiJwt(configuration);
         services.AddSingleton<RabbitMqPublisher>();
-        services.AddScoped<IReportRepository, ReportRepository>();
-        services.AddScoped<Ianalyticservice, Services.analyticservice>();
+        services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
+        services.AddScoped<IAnalyticsService, Services.AnalyticsService>();
         services.AddControllers();
         services.AddFlowFiSwagger();
         return services;
