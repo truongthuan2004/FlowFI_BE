@@ -1,4 +1,3 @@
-using FlowFi.Common.Api;
 using FlowFi.NotificationService.DTOs;
 using FlowFi.NotificationService.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -14,7 +13,7 @@ public sealed class NotificationSettingsController(INotificationService notifica
     [HttpGet]
     public async Task<ActionResult<NotificationSettingsDto>> Get(CancellationToken cancellationToken)
     {
-        var userId = User.UserId();
+        var userId = GetCurrentUserId();
         if (userId == Guid.Empty) return Unauthorized();
 
         var settings = await notificationService.GetSettingsAsync(userId, cancellationToken);
@@ -24,9 +23,17 @@ public sealed class NotificationSettingsController(INotificationService notifica
     [HttpPut]
     public async Task<ActionResult<NotificationSettingsDto>> Update([FromBody] UpdateNotificationSettingsRequest request, CancellationToken cancellationToken)
     {
-        var userId = User.UserId();
+        var userId = GetCurrentUserId();
         if (userId == Guid.Empty) return Unauthorized();
 
         return Ok(await notificationService.UpdateSettingsAsync(userId, request, cancellationToken));
+    }
+
+    private Guid GetCurrentUserId()
+    {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? User.FindFirst("sub")?.Value;
+
+        return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
     }
 }

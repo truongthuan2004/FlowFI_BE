@@ -12,7 +12,7 @@ public static class AiServiceExtensions
 {
     public static IServiceCollection AddAiService(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddFlowFiPostgres<AiDbContext>(configuration);
+        services.AddFlowFiPostgres<AiDbContext>(configuration, "AiDb");
         services.AddFlowFiJwt(configuration);
         services.AddScoped<IAiRepository, AiRepository>();
         services.AddScoped<IAiService, Services.AiService>();

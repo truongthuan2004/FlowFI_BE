@@ -7,6 +7,7 @@ namespace FlowFi.AuthUserService.Repositories;
 
 public sealed class UserRepository(AuthDbContext db) : IUserRepository
 {
+    // User
     public async Task<User> AddUserAsync(User user, CancellationToken cancellationToken)
     {
         db.Users.Add(user);
@@ -18,65 +19,53 @@ public sealed class UserRepository(AuthDbContext db) : IUserRepository
         => db.Users.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
     public Task<User?> GetUserByEmailAsync(string email, CancellationToken cancellationToken)
-        => db.Users.FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
+        => db.Users.FirstOrDefaultAsync(x => x.Email == email.ToLower(), cancellationToken);
 
     public async Task<User> UpdateUserAsync(User user, CancellationToken cancellationToken)
     {
+        user.UpdatedAt = DateTimeOffset.UtcNow;
         db.Users.Update(user);
         await db.SaveChangesAsync(cancellationToken);
         return user;
     }
 
-    public async Task DeleteUserAsync(Guid id, CancellationToken cancellationToken)
+    // Refresh Tokens
+    public async Task<RefreshToken> AddRefreshTokenAsync(RefreshToken token, CancellationToken cancellationToken)
     {
-        var user = await db.Users.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (user is null) return;
+        db.RefreshTokens.Add(token);
+        await db.SaveChangesAsync(cancellationToken);
+        return token;
+    }
 
-        db.Users.Remove(user);
+    public Task<RefreshToken?> GetRefreshTokenAsync(string token, CancellationToken cancellationToken)
+        => db.RefreshTokens
+            .FirstOrDefaultAsync(x => x.Token == token && !x.IsRevoked, cancellationToken);
+
+    public async Task RevokeRefreshTokenAsync(string token, CancellationToken cancellationToken)
+    {
+        var refreshToken = await db.RefreshTokens.FirstOrDefaultAsync(x => x.Token == token, cancellationToken);
+        if (refreshToken is not null)
+        {
+            refreshToken.IsRevoked = true;
+            await db.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    public async Task RevokeAllUserTokensAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var tokens = await db.RefreshTokens
+            .Where(x => x.UserId == userId && !x.IsRevoked)
+            .ToListAsync(cancellationToken);
+
+        foreach (var token in tokens)
+        {
+            token.IsRevoked = true;
+        }
         await db.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<LoginDevice> AddLoginDeviceAsync(LoginDevice device, CancellationToken cancellationToken)
-    {
-        db.LoginDevices.Add(device);
-        await db.SaveChangesAsync(cancellationToken);
-        return device;
-    }
-
-    public async Task<IReadOnlyList<LoginDevice>> GetLoginDevicesAsync(Guid userId, CancellationToken cancellationToken)
-        => await db.LoginDevices.Where(x => x.UserId == userId).ToListAsync(cancellationToken);
-
-    public Task<OAuthIdentity?> GetOAuthIdentityAsync(string provider, string providerUserId, CancellationToken cancellationToken)
-        => db.OAuthIdentities.FirstOrDefaultAsync(x => x.Provider == provider && x.ProviderUserId == providerUserId, cancellationToken);
-
-    public async Task<OAuthIdentity> AddOAuthIdentityAsync(OAuthIdentity identity, CancellationToken cancellationToken)
-    {
-        db.OAuthIdentities.Add(identity);
-        await db.SaveChangesAsync(cancellationToken);
-        return identity;
-    }
-
-    public async Task<RefreshToken?> AddRefreshTokenAsync(RefreshToken refreshToken, CancellationToken cancellationToken)
-    {
-        db.RefreshTokens.Add(refreshToken);
-        await db.SaveChangesAsync(cancellationToken);
-        return refreshToken;
-    }
-
-    public Task<RefreshToken?> GetRefreshTokenAsync(string jti, CancellationToken cancellationToken)
-        => db.RefreshTokens.FirstOrDefaultAsync(x => x.Jti == jti, cancellationToken);
-
-    public async Task RevokeRefreshTokenAsync(string jti, CancellationToken cancellationToken)
-    {
-        var token = await db.RefreshTokens.FirstOrDefaultAsync(x => x.Jti == jti, cancellationToken);
-        if (token is null) return;
-
-        var revoked = token with { RevokedAt = DateTimeOffset.UtcNow };
-        db.RefreshTokens.Update(revoked);
-        await db.SaveChangesAsync(cancellationToken);
-    }
-
-    public async Task<PasswordResetToken?> AddPasswordResetTokenAsync(PasswordResetToken token, CancellationToken cancellationToken)
+    // Password Reset
+    public async Task<PasswordResetToken> AddPasswordResetTokenAsync(PasswordResetToken token, CancellationToken cancellationToken)
     {
         db.PasswordResetTokens.Add(token);
         await db.SaveChangesAsync(cancellationToken);
@@ -84,15 +73,31 @@ public sealed class UserRepository(AuthDbContext db) : IUserRepository
     }
 
     public Task<PasswordResetToken?> GetPasswordResetTokenAsync(string token, CancellationToken cancellationToken)
-        => db.PasswordResetTokens.FirstOrDefaultAsync(x => x.TokenHash == token || x.OtpHash == token, cancellationToken);
+        => db.PasswordResetTokens
+            .FirstOrDefaultAsync(x => x.Token == token && !x.IsUsed, cancellationToken);
 
     public async Task MarkPasswordResetTokenUsedAsync(Guid id, CancellationToken cancellationToken)
     {
         var token = await db.PasswordResetTokens.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (token is null) return;
+        if (token is not null)
+        {
+            token.IsUsed = true;
+            await db.SaveChangesAsync(cancellationToken);
+        }
+    }
 
-        var updated = token with { UsedAt = DateTimeOffset.UtcNow };
-        db.PasswordResetTokens.Update(updated);
+    // User Logs
+    public async Task AddUserLogAsync(UserLog log, CancellationToken cancellationToken)
+    {
+        db.UserLogs.Add(log);
         await db.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<UserLog>> GetUserLogsAsync(Guid userId, int page, int pageSize, CancellationToken cancellationToken)
+        => await db.UserLogs
+            .Where(x => x.UserId == userId)
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
 }

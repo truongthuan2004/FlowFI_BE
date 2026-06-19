@@ -1,12 +1,14 @@
 namespace FlowFi.AuthUserService.Entities;
 
-public sealed record PasswordResetToken(
-    Guid Id,
-    Guid UserId,
-    string? TokenHash,
-    string? OtpHash,
-    string ResetMethod,
-    DateTimeOffset ExpiresAt,
-    DateTimeOffset? UsedAt,
-    int AttemptCount,
-    DateTimeOffset CreatedAt);
+public sealed class PasswordResetToken
+{
+    public Guid Id { get; set; }
+    public Guid UserId { get; set; }
+
+    public string Token { get; set; } = string.Empty;
+    public string? OtpCode { get; set; }
+    public DateTimeOffset ExpiresAt { get; set; }
+    public bool IsUsed { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+}

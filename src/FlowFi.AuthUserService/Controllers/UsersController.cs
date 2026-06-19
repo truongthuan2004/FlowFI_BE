@@ -1,6 +1,5 @@
 using FlowFi.AuthUserService.DTOs;
 using FlowFi.AuthUserService.Interface;
-using FlowFi.Common.Api;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,67 +11,57 @@ namespace FlowFi.AuthUserService.Controllers;
 public sealed class UsersController(IAuthService authService) : ControllerBase
 {
     [HttpGet("me")]
-    public async Task<ActionResult<UserDto>> Me(CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<UserDto>>> Me(CancellationToken cancellationToken)
     {
-        var userId = User.UserId();
-        if (userId == Guid.Empty) return Unauthorized();
+        var userId = GetCurrentUserId();
+        if (userId == Guid.Empty) return Unauthorized(ApiResponse.Error("Unauthorized", "UNAUTHORIZED"));
 
         var user = await authService.GetMeAsync(userId, cancellationToken);
-        return user is null ? NotFound() : Ok(user);
+        if (user is null)
+            return NotFound(ApiResponse.Error("Không tìm thấy người dùng", "USER_NOT_FOUND"));
+
+        return Ok(ApiResponse<UserDto>.Ok(user, "Lấy thông tin người dùng thành công"));
     }
 
     [HttpPut("me")]
-    public async Task<ActionResult<UserDto>> UpdateMe([FromBody] UpdateProfileRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<UserDto>>> UpdateMe([FromBody] UpdateProfileRequest request, CancellationToken cancellationToken)
     {
-        var userId = User.UserId();
-        if (userId == Guid.Empty) return Unauthorized();
+        var userId = GetCurrentUserId();
+        if (userId == Guid.Empty) return Unauthorized(ApiResponse.Error("Unauthorized", "UNAUTHORIZED"));
 
-        return Ok(await authService.UpdateProfileAsync(userId, request, cancellationToken));
+        try
+        {
+            var user = await authService.UpdateProfileAsync(userId, request, cancellationToken);
+            return Ok(ApiResponse<UserDto>.Ok(user, "Cập nhật hồ sơ thành công"));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse.Error(ex.Message, "UPDATE_FAILED"));
+        }
     }
 
     [HttpPut("me/preferences")]
-    public async Task<ActionResult<UserDto>> UpdatePreferences([FromBody] UpdatePreferencesRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<UserDto>>> UpdatePreferences([FromBody] UpdatePreferencesRequest request, CancellationToken cancellationToken)
     {
-        var userId = User.UserId();
-        if (userId == Guid.Empty) return Unauthorized();
+        var userId = GetCurrentUserId();
+        if (userId == Guid.Empty) return Unauthorized(ApiResponse.Error("Unauthorized", "UNAUTHORIZED"));
 
-        return Ok(await authService.UpdatePreferencesAsync(userId, request, cancellationToken));
+        try
+        {
+            var user = await authService.UpdatePreferencesAsync(userId, request, cancellationToken);
+            return Ok(ApiResponse<UserDto>.Ok(user, "Cập nhật tùy chỉnh thành công"));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse.Error(ex.Message, "UPDATE_FAILED"));
+        }
     }
 
-    [HttpGet("me/devices")]
-    public async Task<ActionResult<IReadOnlyList<UserDeviceDto>>> GetDevices(CancellationToken cancellationToken)
+    private Guid GetCurrentUserId()
     {
-        var userId = User.UserId();
-        if (userId == Guid.Empty) return Unauthorized();
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? User.FindFirst("sub")?.Value;
 
-        return Ok(await authService.GetDevicesAsync(userId, cancellationToken));
-    }
-
-    [HttpDelete("me/devices/{deviceId:guid}")]
-    public async Task<IActionResult> RevokeDevice(Guid deviceId, CancellationToken cancellationToken)
-    {
-        var userId = User.UserId();
-        if (userId == Guid.Empty) return Unauthorized();
-
-        await authService.RevokeDeviceAsync(userId, deviceId, cancellationToken);
-        return NoContent();
-    }
-
-    [HttpGet("me/sessions")]
-    public async Task<ActionResult<IReadOnlyList<SessionDto>>> GetSessions(CancellationToken cancellationToken)
-    {
-        var userId = User.UserId();
-        if (userId == Guid.Empty) return Unauthorized();
-
-        return Ok(await authService.GetSessionsAsync(userId, cancellationToken));
-    }
-
-    [HttpGet("me/logs")]
-    public async Task<ActionResult<IReadOnlyList<UserLogDto>>> GetLogs(CancellationToken cancellationToken)
-    {
-        var userId = User.UserId();
-        if (userId == Guid.Empty) return Unauthorized();
-
-        return Ok(await authService.GetLogsAsync(userId, cancellationToken));
+        return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
     }
 }

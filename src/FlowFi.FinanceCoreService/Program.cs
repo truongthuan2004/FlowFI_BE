@@ -13,7 +13,7 @@ app.UseFlowFiCorrelationId();
 app.UseFlowFiRequestLogging();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseFlowFiSwagger("FlowFi Finance Core Service");
+app.UseFlowFiSwagger();
 
 app.MapGet("/", () => Results.Redirect("/swagger"));
 app.MapHealthChecks("/health");

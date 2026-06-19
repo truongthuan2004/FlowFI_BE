@@ -13,13 +13,13 @@ public static class FinanceServiceExtensions
 {
     public static IServiceCollection AddFinanceService(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddFlowFiPostgres<FinanceDbContext>(configuration);
+        services.AddFlowFiPostgres<FinanceDbContext>(configuration, "FinanceDb");
         services.AddFlowFiJwt(configuration);
         services.AddSingleton<RabbitMqPublisher>();
         services.AddScoped<IFinanceRepository, FinanceRepository>();
         services.AddScoped<IFinanceService, Services.FinanceService>();
         services.AddControllers();
-        services.AddFlowFiSwagger("FlowFi Finance Core Service");
+        services.AddFlowFiSwagger();
         return services;
     }
 }
