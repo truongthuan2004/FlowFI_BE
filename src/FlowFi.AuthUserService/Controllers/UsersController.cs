@@ -1,6 +1,6 @@
 using FlowFi.AuthUserService.DTOs;
 using FlowFi.AuthUserService.Entities;
-using FlowFi.AuthUserService.Interfaces;
+using FlowFi.AuthUserService.Interface;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlowFi.AuthUserService.Controllers;

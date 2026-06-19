@@ -1,6 +1,6 @@
 using FlowFi.FinanceCoreService.Database;
 using FlowFi.FinanceCoreService.Entities;
-using FlowFi.FinanceCoreService.Interfaces;
+using FlowFi.FinanceCoreService.Interface;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowFi.FinanceCoreService.Repositories;

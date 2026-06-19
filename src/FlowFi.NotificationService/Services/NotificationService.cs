@@ -1,6 +1,6 @@
 using FlowFi.NotificationService.DTOs;
 using FlowFi.NotificationService.Entities;
-using FlowFi.NotificationService.Interfaces;
+using FlowFi.NotificationService.Interface;
 using FlowFi.Contracts.Events;
 using FlowFi.EventBus.Messaging;
 

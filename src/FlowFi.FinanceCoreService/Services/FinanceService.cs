@@ -1,5 +1,5 @@
 using FlowFi.FinanceCoreService.Entities;
-using FlowFi.FinanceCoreService.Interfaces;
+using FlowFi.FinanceCoreService.Interface;
 using FlowFi.Contracts.Events;
 using FlowFi.EventBus.Messaging;
 
