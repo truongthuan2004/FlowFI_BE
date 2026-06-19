@@ -1,6 +1,6 @@
 ﻿using FlowFi.FinanceCoreService.DTOs;
 
-namespace FlowFi.FinanceCoreService.Services;
+namespace FlowFi.FinanceCoreService.Interface;
 
 public interface ITagService
 {

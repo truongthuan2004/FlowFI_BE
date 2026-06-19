@@ -1,6 +1,8 @@
 ﻿using FlowFi.FinanceCoreService.Entities;
 
-namespace FlowFi.FinanceCoreService.Services;
+using FlowFi.FinanceCoreService.Services;
+
+namespace FlowFi.FinanceCoreService.Interface;
 
 public interface IFinanceAuditService
 {
