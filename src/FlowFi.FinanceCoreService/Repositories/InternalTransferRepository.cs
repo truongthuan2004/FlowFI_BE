@@ -18,12 +18,7 @@ public class InternalTransferRepository : IInternalTransferRepository
         InternalTransfer transfer,
         CancellationToken cancellationToken = default)
     {
-        await using var databaseTransaction =
-            await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-
-        try
-        {
-            // A stable lock order avoids deadlocks for simultaneous opposite transfers.
+        // The service owns the transaction; a stable lock order avoids opposite-transfer deadlocks.
             var wallets = await _dbContext.Wallets
                 .FromSqlInterpolated($"""
                     SELECT * FROM wallets
@@ -38,7 +33,6 @@ public class InternalTransferRepository : IInternalTransferRepository
                           wallet.UserId == transfer.UserId);
             if (sourceWallet is null)
             {
-                await databaseTransaction.RollbackAsync(cancellationToken);
                 return new InternalTransferCreationResult(
                     InternalTransferCreationStatus.SourceWalletNotFound);
             }
@@ -48,14 +42,12 @@ public class InternalTransferRepository : IInternalTransferRepository
                           wallet.UserId == transfer.UserId);
             if (destinationWallet is null)
             {
-                await databaseTransaction.RollbackAsync(cancellationToken);
                 return new InternalTransferCreationResult(
                     InternalTransferCreationStatus.DestinationWalletNotFound);
             }
 
             if (sourceWallet.Balance < transfer.Amount)
             {
-                await databaseTransaction.RollbackAsync(cancellationToken);
                 return new InternalTransferCreationResult(
                     InternalTransferCreationStatus.InsufficientBalance);
             }
@@ -122,18 +114,9 @@ public class InternalTransferRepository : IInternalTransferRepository
                 new[] { sourceBalanceLog, destinationBalanceLog },
                 cancellationToken);
             await _dbContext.FinanceAuditLogs.AddAsync(auditLog, cancellationToken);
-            await _dbContext.SaveChangesAsync(cancellationToken);
-            await databaseTransaction.CommitAsync(cancellationToken);
-
             return new InternalTransferCreationResult(
                 InternalTransferCreationStatus.Success,
                 transfer);
-        }
-        catch
-        {
-            await databaseTransaction.RollbackAsync(CancellationToken.None);
-            throw;
-        }
     }
 }
 

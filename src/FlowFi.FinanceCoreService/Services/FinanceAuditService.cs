@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using FlowFi.FinanceCoreService.Database;
 using FlowFi.FinanceCoreService.Entities;
+using FlowFi.FinanceCoreService.Repositories;
 
 namespace FlowFi.FinanceCoreService.Services;
 
@@ -13,11 +13,15 @@ public class FinanceAuditService : IFinanceAuditService
         ReferenceHandler = ReferenceHandler.IgnoreCycles
     };
 
-    private readonly FinanceDbContext _dbContext;
+    private readonly IFinanceAuditRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public FinanceAuditService(FinanceDbContext dbContext)
+    public FinanceAuditService(
+        IFinanceAuditRepository repository,
+        IUnitOfWork unitOfWork)
     {
-        _dbContext = dbContext;
+        _repository = repository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<FinanceAuditLog> LogAsync(
@@ -51,8 +55,8 @@ public class FinanceAuditService : IFinanceAuditService
             CreatedAt = DateTimeOffset.UtcNow
         };
 
-        await _dbContext.FinanceAuditLogs.AddAsync(auditLog, cancellationToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _repository.AddAsync(auditLog, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
         return auditLog;
     }
 

@@ -36,24 +36,23 @@ public class WalletRepository : IWalletRepository
         CancellationToken cancellationToken = default)
     {
         await _dbContext.Wallets.AddAsync(wallet, cancellationToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
         return wallet;
     }
 
-    public async Task UpdateAsync(
+    public Task UpdateAsync(
         Wallet wallet,
         CancellationToken cancellationToken = default)
     {
         _dbContext.Wallets.Update(wallet);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        return Task.CompletedTask;
     }
 
-    public async Task DeleteAsync(
+    public Task DeleteAsync(
         Wallet wallet,
         CancellationToken cancellationToken = default)
     {
         _dbContext.Wallets.Remove(wallet);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        return Task.CompletedTask;
     }
 }
 

@@ -34,6 +34,8 @@ public static class FinanceServiceExtensions
         services.AddScoped<ITransactionService, TransactionService>();
         services.AddScoped<IInternalTransferRepository, InternalTransferRepository>();
         services.AddScoped<IInternalTransferService, InternalTransferService>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IFinanceAuditRepository, FinanceAuditRepository>();
         services.AddScoped<IFinanceAuditService, FinanceAuditService>();
         services.AddScoped<IRecurringTransactionRepository, RecurringTransactionRepository>();
         services.AddScoped<IRecurringTransactionService, RecurringTransactionService>();

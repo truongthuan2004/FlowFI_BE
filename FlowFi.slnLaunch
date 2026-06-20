@@ -3,7 +3,11 @@
     "Name": "Gateway Only",
     "Projects": [
       {
-        "Path": "src\\FlowFi.ApiGateway\\FlowFi.ApiGateway.csproj",
+        "Path": "src\\FlowFi.AuthUserService\\FlowFi.AuthUserService.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\FlowFi.FinanceCoreService\\FlowFi.FinanceCoreService.csproj",
         "Action": "Start"
       }
     ]

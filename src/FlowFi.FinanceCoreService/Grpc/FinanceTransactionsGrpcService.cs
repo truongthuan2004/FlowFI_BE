@@ -1,20 +1,17 @@
 using System.Globalization;
 using FlowFi.Common.Api;
-using FlowFi.FinanceCoreService.Database;
 using FlowFi.FinanceCoreService.DTOs;
-using FlowFi.FinanceCoreService.Entities;
 using FlowFi.FinanceCoreService.Interface;
 using FlowFi.FinanceCoreService.Services;
 using FlowFi.GrpcContracts.Finance;
 using Grpc.Core;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
 
 namespace FlowFi.FinanceCoreService.Grpc;
 
 [Authorize]
 public sealed class FinanceTransactionsGrpcService(
-    FinanceDbContext db,
+    ITagService tagService,
     ITransactionService transactionService) : FinanceTransactions.FinanceTransactionsBase
 {
     public override async Task<ListTagsReply> ListTags(
@@ -23,11 +20,10 @@ public sealed class FinanceTransactionsGrpcService(
     {
         var userId = GetUserId(context);
         var transactionType = NormalizeTransactionType(request.TransactionType);
-        var tags = await db.Tags
-            .AsNoTracking()
-            .Where(tag => tag.UserId == userId && tag.Type.ToUpper() == transactionType)
-            .OrderBy(tag => tag.Name)
-            .ToListAsync(context.CancellationToken);
+        var tags = await tagService.GetByUserAndTypeAsync(
+            userId,
+            transactionType,
+            context.CancellationToken);
 
         var reply = new ListTagsReply();
         reply.Tags.AddRange(tags.Select(ToMessage));
@@ -42,33 +38,15 @@ public sealed class FinanceTransactionsGrpcService(
         var transactionType = NormalizeTransactionType(request.TransactionType);
         var name = RequiredText(request.Name, nameof(request.Name), 100);
 
-        var existing = await db.Tags
-            .AsNoTracking()
-            .FirstOrDefaultAsync(
-                tag => tag.UserId == userId &&
-                       tag.Type.ToUpper() == transactionType &&
-                       tag.Name.ToLower() == name.ToLower(),
-                context.CancellationToken);
-        if (existing is not null)
+        var tag = await tagService.GetOrCreateAsync(
+            new CreateTagDto
         {
-            return ToMessage(existing);
-        }
-
-        var now = DateTimeOffset.UtcNow;
-        var tag = new Tag
-        {
-            Id = Guid.NewGuid(),
             UserId = userId,
             Name = name,
             Type = transactionType,
             Icon = OptionalText(request.Icon, "receipt", 100),
-            Color = OptionalText(request.Color, "#64748B", 20),
-            CreatedAt = now,
-            UpdatedAt = now
-        };
-
-        db.Tags.Add(tag);
-        await db.SaveChangesAsync(context.CancellationToken);
+            Color = OptionalText(request.Color, "#64748B", 20)
+        }, context.CancellationToken);
         return ToMessage(tag);
     }
 
@@ -189,7 +167,7 @@ public sealed class FinanceTransactionsGrpcService(
     private static RpcException InvalidArgument(string message)
         => new(new Status(StatusCode.InvalidArgument, message));
 
-    private static TagMessage ToMessage(Tag tag)
+    private static TagMessage ToMessage(TagDto tag)
         => new()
         {
             Id = tag.Id.ToString(),

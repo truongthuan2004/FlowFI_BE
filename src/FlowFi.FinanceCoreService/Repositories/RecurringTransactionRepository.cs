@@ -36,24 +36,23 @@ public class RecurringTransactionRepository : IRecurringTransactionRepository
         CancellationToken cancellationToken = default)
     {
         await _dbContext.RecurringTransactions.AddAsync(transaction, cancellationToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
         return transaction;
     }
 
-    public async Task UpdateAsync(
+    public Task UpdateAsync(
         RecurringTransaction transaction,
         CancellationToken cancellationToken = default)
     {
         _dbContext.RecurringTransactions.Update(transaction);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        return Task.CompletedTask;
     }
 
-    public async Task DeleteAsync(
+    public Task DeleteAsync(
         RecurringTransaction transaction,
         CancellationToken cancellationToken = default)
     {
         _dbContext.RecurringTransactions.Remove(transaction);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        return Task.CompletedTask;
     }
 }
 

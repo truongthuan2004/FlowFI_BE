@@ -36,16 +36,15 @@ public class SyncQueueRepository : ISyncQueueRepository
         CancellationToken cancellationToken = default)
     {
         await _dbContext.SyncQueue.AddAsync(item, cancellationToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
         return item;
     }
 
-    public async Task UpdateAsync(
+    public Task UpdateAsync(
         SyncQueueItem item,
         CancellationToken cancellationToken = default)
     {
         _dbContext.SyncQueue.Update(item);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        return Task.CompletedTask;
     }
 }
 

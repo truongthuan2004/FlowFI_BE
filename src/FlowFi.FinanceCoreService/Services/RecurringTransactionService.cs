@@ -7,10 +7,14 @@ namespace FlowFi.FinanceCoreService.Services;
 public class RecurringTransactionService : IRecurringTransactionService
 {
     private readonly IRecurringTransactionRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public RecurringTransactionService(IRecurringTransactionRepository repository)
+    public RecurringTransactionService(
+        IRecurringTransactionRepository repository,
+        IUnitOfWork unitOfWork)
     {
         _repository = repository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<IReadOnlyList<RecurringTransactionDto>> GetAllAsync(
@@ -45,6 +49,7 @@ public class RecurringTransactionService : IRecurringTransactionService
         };
 
         var created = await _repository.AddAsync(transaction, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
         return MapToDto(created);
     }
 
@@ -74,6 +79,7 @@ public class RecurringTransactionService : IRecurringTransactionService
         transaction.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _repository.UpdateAsync(transaction, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
         return MapToDto(transaction);
     }
 
@@ -88,6 +94,7 @@ public class RecurringTransactionService : IRecurringTransactionService
         }
 
         await _repository.DeleteAsync(transaction, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
         return true;
     }
 
