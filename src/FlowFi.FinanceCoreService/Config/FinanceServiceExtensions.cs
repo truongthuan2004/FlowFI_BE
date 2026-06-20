@@ -24,6 +24,7 @@ public static class FinanceServiceExtensions
                 .Build();
         });
         services.AddSingleton<RabbitMqPublisher>();
+        services.AddGrpc();
 
         services.AddScoped<IWalletRepository, WalletRepository>();
         services.AddScoped<IWalletService, WalletService>();

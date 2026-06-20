@@ -1,7 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web"><PropertyGroup>  <UserSecretsId>e9db1f6a-669c-4195-bad6-aa4deb968b1e</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0" />
     <ProjectReference Include="../../shared/FlowFi.Common/FlowFi.Common.csproj" />
+    <ProjectReference Include="../../shared/FlowFi.GrpcContracts/FlowFi.GrpcContracts.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Config\" />

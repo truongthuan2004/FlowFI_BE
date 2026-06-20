@@ -16,10 +16,12 @@ public sealed class AnalyticsRepository(AnalyticsDbContext db) : IAnalyticsRepos
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<Budget?> GetBudgetAsync(Guid budgetId, CancellationToken cancellationToken)
+    public async Task<Budget?> GetBudgetAsync(Guid userId, Guid budgetId, CancellationToken cancellationToken)
     {
         return await db.Budgets
-            .FirstOrDefaultAsync(x => x.Id == budgetId && x.DeletedAt == null, cancellationToken);
+            .FirstOrDefaultAsync(
+                x => x.Id == budgetId && x.UserId == userId && x.DeletedAt == null,
+                cancellationToken);
     }
 
     public async Task<Budget> AddBudgetAsync(Budget budget, CancellationToken cancellationToken)
@@ -45,10 +47,12 @@ public sealed class AnalyticsRepository(AnalyticsDbContext db) : IAnalyticsRepos
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<SavingGoal?> GetSavingGoalAsync(Guid goalId, CancellationToken cancellationToken)
+    public async Task<SavingGoal?> GetSavingGoalAsync(Guid userId, Guid goalId, CancellationToken cancellationToken)
     {
         return await db.SavingGoals
-            .FirstOrDefaultAsync(x => x.Id == goalId && x.DeletedAt == null, cancellationToken);
+            .FirstOrDefaultAsync(
+                x => x.Id == goalId && x.UserId == userId && x.DeletedAt == null,
+                cancellationToken);
     }
 
     public async Task<SavingGoal> AddSavingGoalAsync(SavingGoal goal, CancellationToken cancellationToken)

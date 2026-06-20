@@ -20,10 +20,14 @@ public sealed partial class ReceiptParserService : IReceiptParserService
 
     private static decimal? ExtractAmount(string text)
     {
-        var amounts = AmountRegex()
-            .Matches(text)
+        var matches = AmountRegex().Matches(text).ToArray();
+        var currencyMatches = matches
+            .Where(match => !string.IsNullOrWhiteSpace(match.Groups["unit"].Value))
+            .ToArray();
+        var candidates = currencyMatches.Length > 0 ? currencyMatches : matches;
+        var amounts = candidates
             .Select(ParseAmount)
-            .Where(amount => amount.HasValue)
+            .Where(amount => amount is > 0 and <= 999_999_999_999_999.99m)
             .Select(amount => amount!.Value)
             .ToArray();
 
@@ -32,7 +36,9 @@ public sealed partial class ReceiptParserService : IReceiptParserService
 
     private static decimal? ParseAmount(Match match)
     {
-        var rawAmount = match.Groups["amount"].Value.Replace(".", string.Empty).Replace(",", string.Empty);
+        var rawAmount = match.Groups["amount"].Value
+            .Replace(".", string.Empty)
+            .Replace(",", string.Empty);
         if (!decimal.TryParse(rawAmount, NumberStyles.Number, CultureInfo.InvariantCulture, out var amount))
         {
             return null;
@@ -45,12 +51,18 @@ public sealed partial class ReceiptParserService : IReceiptParserService
     private static string? ExtractTransactionType(string text)
     {
         var lowerText = text.ToLowerInvariant();
-        if (ContainsAny(lowerText, "luong", "lương", "nhan", "nhận", "thu", "income"))
+        if (ContainsAny(
+                lowerText,
+                "luong", "lương", "nhan tien", "nhận tiền", "tien vao", "tiền vào",
+                "credited", "received", "income"))
         {
             return "INCOME";
         }
 
-        if (ContainsAny(lowerText, "chi", "mua", "tra", "trả", "ton", "tốn", "expense"))
+        if (ContainsAny(
+                lowerText,
+                "chi", "mua", "tra", "trả", "thanh toan", "thanh toán", "chuyen khoan",
+                "chuyển khoản", "total", "tong tien", "tổng tiền", "expense"))
         {
             return "EXPENSE";
         }
@@ -61,6 +73,16 @@ public sealed partial class ReceiptParserService : IReceiptParserService
     private static string? ExtractTag(string text)
     {
         var lowerText = text.ToLowerInvariant();
+        if (ContainsAny(lowerText, "chuyen khoan", "chuyển khoản", "bank transfer", "ngan hang", "ngân hàng"))
+        {
+            return "TRANSFER";
+        }
+
+        if (ContainsAny(lowerText, "luong", "lương", "salary", "payroll"))
+        {
+            return "SALARY";
+        }
+
         if (ContainsAny(lowerText, "an", "ăn", "food", "com", "cơm", "pho", "phở", "cafe"))
         {
             return "FOOD";
@@ -79,6 +101,16 @@ public sealed partial class ReceiptParserService : IReceiptParserService
         if (ContainsAny(lowerText, "hoc", "học", "sach", "sách", "education"))
         {
             return "EDUCATION";
+        }
+
+        if (ContainsAny(lowerText, "dien", "điện", "nuoc", "nước", "internet", "utilities"))
+        {
+            return "UTILITIES";
+        }
+
+        if (ContainsAny(lowerText, "thuoc", "thuốc", "benh vien", "bệnh viện", "health", "medical"))
+        {
+            return "HEALTH";
         }
 
         return null;
@@ -103,9 +135,7 @@ public sealed partial class ReceiptParserService : IReceiptParserService
     }
 
     private static bool ContainsAny(string text, params string[] keywords)
-    {
-        return keywords.Any(text.Contains);
-    }
+        => keywords.Any(text.Contains);
 
     [GeneratedRegex(@"(?<amount>\d{1,3}(?:[.,]\d{3})+|\d+)\s*(?<unit>k|nghin|nghìn|vnd|đ|dong|đồng)?", RegexOptions.IgnoreCase)]
     private static partial Regex AmountRegex();

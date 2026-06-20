@@ -47,6 +47,7 @@ public class TransactionsController : ControllerBase
             userId,
             walletId,
             request,
+            null,
             cancellationToken);
 
         return result.Status switch

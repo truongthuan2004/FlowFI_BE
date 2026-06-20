@@ -7,7 +7,6 @@ public sealed class CreateBudgetRequestValidator : AbstractValidator<CreateBudge
 {
     public CreateBudgetRequestValidator()
     {
-        RuleFor(x => x.UserId).NotEmpty();
         RuleFor(x => x.Name).NotEmpty().MaximumLength(150);
         RuleFor(x => x.PeriodType)
             .Must(AnalyticsValidationRules.BeValidBudgetPeriod)
@@ -19,14 +18,6 @@ public sealed class CreateBudgetRequestValidator : AbstractValidator<CreateBudge
         RuleFor(x => x.EndDate)
             .GreaterThanOrEqualTo(x => x.StartDate)
             .WithMessage("EndDate must be greater than or equal to StartDate.");
-    }
-}
-
-public sealed class GetBudgetsQueryValidator : AbstractValidator<GetBudgetsQuery>
-{
-    public GetBudgetsQueryValidator()
-    {
-        RuleFor(x => x.UserId).NotEmpty();
     }
 }
 

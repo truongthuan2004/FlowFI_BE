@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+option csharp_namespace = "FlowFi.GrpcContracts.Finance";
+
+package flowfi.finance.v1;
+
+service FinanceTransactions {
+  rpc ListTags (ListTagsRequest) returns (ListTagsReply);
+  rpc CreateTag (CreateTagRequest) returns (TagMessage);
+  rpc CreateTransaction (CreateTransactionRequest) returns (CreateTransactionReply);
+}
+
+message ListTagsRequest {
+  string transaction_type = 1;
+}
+
+message ListTagsReply {
+  repeated TagMessage tags = 1;
+}
+
+message CreateTagRequest {
+  string name = 1;
+  string transaction_type = 2;
+  string icon = 3;
+  string color = 4;
+}
+
+message TagMessage {
+  string id = 1;
+  string name = 2;
+  string transaction_type = 3;
+  string icon = 4;
+  string color = 5;
+}
+
+message CreateTransactionRequest {
+  string wallet_id = 1;
+  string tag_id = 2;
+  string amount = 3;
+  string transaction_type = 4;
+  string title = 5;
+  string note = 6;
+  string transaction_date = 7;
+}
+
+message CreateTransactionReply {
+  bool success = 1;
+  string error_code = 2;
+  TransactionMessage transaction = 3;
+}
+
+message TransactionMessage {
+  string id = 1;
+  string wallet_id = 2;
+  string tag_id = 3;
+  string amount = 4;
+  string transaction_type = 5;
+  string title = 6;
+  string note = 7;
+  string source = 8;
+  string sync_status = 9;
+  string transaction_date = 10;
+  string created_at = 11;
+}

@@ -1,9 +1,6 @@
 namespace FlowFi.AnalyticsService.DTOs;
 
-public sealed record GetBudgetsQuery(Guid UserId);
-
 public sealed record CreateBudgetRequest(
-    Guid UserId,
     Guid? TagId,
     string? TagName,
     string Name,

@@ -10,6 +10,7 @@ using FlowFi.Common.Api;
 using FlowFi.Common.Persistence;
 using FlowFi.Common.Authentication;
 using FlowFi.Common.OpenApi;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FlowFi.AnalyticsService.Config;
 
@@ -19,6 +20,13 @@ public static class AnalyticsServiceExtensions
     {
         services.AddFlowFiPostgres<AnalyticsDbContext>(configuration);
         services.AddFlowFiJwt(configuration);
+        services.AddAuthorization(options =>
+        {
+            options.DefaultPolicy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .RequireAssertion(context => context.User.UserId() != Guid.Empty)
+                .Build();
+        });
         services.AddSingleton<RabbitMqPublisher>();
         services.AddSingleton<IAnalyticsEventPublisher, RabbitMqAnalyticsEventPublisher>();
         services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();

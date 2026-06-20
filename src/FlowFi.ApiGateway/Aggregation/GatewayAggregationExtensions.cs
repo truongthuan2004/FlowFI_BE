@@ -5,6 +5,7 @@ public static class GatewayAggregationExtensions
     public static IServiceCollection AddGatewayAggregation(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<ServiceCatalogOptions>(configuration.GetSection("ServiceCatalog"));
+        services.AddHttpClient();
 
         foreach (var service in configuration.GetSection("ServiceCatalog:Services").Get<ServiceCatalogEntry[]>() ?? [])
         {
@@ -32,4 +33,3 @@ public static class GatewayAggregationExtensions
         return endpoints;
     }
 }
-
