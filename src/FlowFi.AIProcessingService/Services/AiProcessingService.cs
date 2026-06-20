@@ -6,6 +6,7 @@ namespace FlowFi.AIProcessingService.Services;
 
 public sealed class AiProcessingService(
     IAiProcessingRepository repository,
+    IUnitOfWork unitOfWork,
     IImageStorageService imageStorageService,
     IAiModelClient aiModelClient,
     IReceiptParserService receiptParserService) : IAiProcessingService
@@ -20,7 +21,7 @@ public sealed class AiProcessingService(
         return repository.GetRequestAsync(id, cancellationToken);
     }
 
-    public Task<AiProcessingRequest> CreateRequestAsync(CreateAiProcessingRequestDto dto, CancellationToken cancellationToken)
+    public async Task<AiProcessingRequest> CreateRequestAsync(CreateAiProcessingRequestDto dto, CancellationToken cancellationToken)
     {
         var request = new AiProcessingRequest
         {
@@ -32,7 +33,9 @@ public sealed class AiProcessingService(
             CreatedAt = DatabaseTimestampNow()
         };
 
-        return repository.AddRequestAsync(request, cancellationToken);
+        repository.AddRequest(request);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return request;
     }
 
     public Task<AiProcessingResult?> GetResultByRequestIdAsync(Guid requestId, CancellationToken cancellationToken)
@@ -40,7 +43,7 @@ public sealed class AiProcessingService(
         return repository.GetResultByRequestIdAsync(requestId, cancellationToken);
     }
 
-    public Task<AiProcessingResult> CreateResultAsync(CreateAiProcessingResultDto dto, CancellationToken cancellationToken)
+    public async Task<AiProcessingResult> CreateResultAsync(CreateAiProcessingResultDto dto, CancellationToken cancellationToken)
     {
         var result = new AiProcessingResult
         {
@@ -52,7 +55,9 @@ public sealed class AiProcessingService(
             RawResponse = dto.RawResponse
         };
 
-        return repository.AddResultAsync(result, cancellationToken);
+        repository.AddResult(result);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return result;
     }
 
     public async Task<ImageAiResponseDto> ProcessImageAsync(Guid userId, IFormFile image, string? mockExtractedText, CancellationToken cancellationToken)
@@ -61,14 +66,17 @@ public sealed class AiProcessingService(
         await image.CopyToAsync(imageStream, cancellationToken);
         var imageBytes = imageStream.ToArray();
 
-        var request = await repository.AddRequestAsync(new AiProcessingRequest
+        var request = new AiProcessingRequest
         {
             UserId = userId,
             InputType = "IMAGE",
             RequestType = "OCR",
             Status = "PROCESSING",
             CreatedAt = DatabaseTimestampNow()
-        }, cancellationToken);
+        };
+
+        repository.AddRequest(request);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         try
         {
@@ -89,9 +97,9 @@ public sealed class AiProcessingService(
             request.Status = "COMPLETED";
             request.CompletedAt = DatabaseTimestampNow();
 
-            await repository.UpdateRequestAsync(request, cancellationToken);
+            repository.UpdateRequest(request);
 
-            var result = await repository.AddResultAsync(new AiProcessingResult
+            var result = new AiProcessingResult
             {
                 RequestId = request.Id,
                 Amount = parsedData.Amount,
@@ -99,7 +107,10 @@ public sealed class AiProcessingService(
                 Tag = parsedData.Tag,
                 TransactionDate = parsedData.TransactionDate,
                 RawResponse = parsedData.RawText
-            }, cancellationToken);
+            };
+
+            repository.AddResult(result);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
 
             return new ImageAiResponseDto(
                 request.Id,
@@ -113,7 +124,8 @@ public sealed class AiProcessingService(
         {
             request.Status = "FAILED";
             request.CompletedAt = DatabaseTimestampNow();
-            await repository.UpdateRequestAsync(request, cancellationToken);
+            repository.UpdateRequest(request);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
             throw;
         }
     }

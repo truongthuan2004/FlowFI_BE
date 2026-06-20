@@ -18,6 +18,7 @@ public static class AiServiceExtensions
         services.AddFlowFiPostgres<AiProcessingDbContext>(configuration);
         services.AddFlowFiJwt(configuration);
         services.AddScoped<IAiProcessingRepository, AiProcessingRepository>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IAiProcessingService, Services.AiProcessingService>();
         services.AddScoped<IReceiptParserService, ReceiptParserService>();
         services.AddScoped<IImageStorageService, LocalImageStorageService>();

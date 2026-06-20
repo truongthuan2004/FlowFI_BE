@@ -29,18 +29,14 @@ public sealed class AiProcessingRepository(AiProcessingDbContext dbContext) : IA
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
-    public async Task<AiProcessingRequest> AddRequestAsync(AiProcessingRequest request, CancellationToken cancellationToken)
+    public void AddRequest(AiProcessingRequest request)
     {
         dbContext.AiProcessingRequests.Add(request);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return request;
     }
 
-    public async Task<AiProcessingRequest> UpdateRequestAsync(AiProcessingRequest request, CancellationToken cancellationToken)
+    public void UpdateRequest(AiProcessingRequest request)
     {
         dbContext.AiProcessingRequests.Update(request);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return request;
     }
 
     public Task<AiProcessingResult?> GetResultByRequestIdAsync(Guid requestId, CancellationToken cancellationToken)
@@ -50,10 +46,8 @@ public sealed class AiProcessingRepository(AiProcessingDbContext dbContext) : IA
             .FirstOrDefaultAsync(x => x.RequestId == requestId, cancellationToken);
     }
 
-    public async Task<AiProcessingResult> AddResultAsync(AiProcessingResult result, CancellationToken cancellationToken)
+    public void AddResult(AiProcessingResult result)
     {
         dbContext.AiProcessingResults.Add(result);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return result;
     }
 }
