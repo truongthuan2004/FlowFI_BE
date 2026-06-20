@@ -8,10 +8,12 @@ namespace FlowFi.FinanceCoreService.Services;
 public class SyncQueueService : ISyncQueueService
 {
     private readonly ISyncQueueRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public SyncQueueService(ISyncQueueRepository repository)
+    public SyncQueueService(ISyncQueueRepository repository, IUnitOfWork unitOfWork)
     {
         _repository = repository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<IReadOnlyList<SyncQueueDto>> GetAllAsync(
@@ -41,6 +43,7 @@ public class SyncQueueService : ISyncQueueService
         };
 
         var created = await _repository.AddAsync(item, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
         return MapToDto(created);
     }
 
@@ -68,6 +71,7 @@ public class SyncQueueService : ISyncQueueService
         }
 
         await _repository.UpdateAsync(item, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
         return true;
     }
 

@@ -31,29 +31,55 @@ public class TagRepository : ITagRepository
             .FirstOrDefaultAsync(tag => tag.Id == id, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Tag>> GetByUserAndTypeAsync(
+        Guid userId,
+        string type,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Tags
+            .AsNoTracking()
+            .Where(tag => tag.UserId == userId && tag.Type.ToUpper() == type)
+            .OrderBy(tag => tag.Name)
+            .ToListAsync(cancellationToken);
+    }
+
+    public Task<Tag?> FindByUserTypeAndNameAsync(
+        Guid userId,
+        string type,
+        string name,
+        CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Tags
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                tag => tag.UserId == userId &&
+                       tag.Type.ToUpper() == type &&
+                       tag.Name.ToLower() == name.ToLower(),
+                cancellationToken);
+    }
+
     public async Task<Tag> AddAsync(
         Tag tag,
         CancellationToken cancellationToken = default)
     {
         await _dbContext.Tags.AddAsync(tag, cancellationToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
         return tag;
     }
 
-    public async Task UpdateAsync(
+    public Task UpdateAsync(
         Tag tag,
         CancellationToken cancellationToken = default)
     {
         _dbContext.Tags.Update(tag);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        return Task.CompletedTask;
     }
 
-    public async Task DeleteAsync(
+    public Task DeleteAsync(
         Tag tag,
         CancellationToken cancellationToken = default)
     {
         _dbContext.Tags.Remove(tag);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        return Task.CompletedTask;
     }
 }
 

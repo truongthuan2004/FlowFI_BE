@@ -52,6 +52,10 @@ public class TransactionsController : ControllerBase
 
         return result.Status switch
         {
+            CreateTransactionStatus.InvalidWalletId =>
+                BadRequest(new { message = "WalletId must be a valid non-empty UUID." }),
+            CreateTransactionStatus.InvalidTransactionType =>
+                BadRequest(new { message = "Transaction type must be INCOME or EXPENSE." }),
             CreateTransactionStatus.WalletNotFound =>
                 NotFound(new { message = "Wallet was not found." }),
             CreateTransactionStatus.WalletInactive =>

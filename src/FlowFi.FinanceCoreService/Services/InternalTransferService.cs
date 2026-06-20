@@ -7,10 +7,14 @@ namespace FlowFi.FinanceCoreService.Services;
 public class InternalTransferService : IInternalTransferService
 {
     private readonly IInternalTransferRepository _transferRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public InternalTransferService(IInternalTransferRepository transferRepository)
+    public InternalTransferService(
+        IInternalTransferRepository transferRepository,
+        IUnitOfWork unitOfWork)
     {
         _transferRepository = transferRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<CreateInternalTransferResult> CreateAsync(
@@ -38,7 +42,18 @@ public class InternalTransferService : IInternalTransferService
             UpdatedAt = now
         };
 
-        var result = await _transferRepository.CreateAsync(transfer, cancellationToken);
+        var result = await _unitOfWork.ExecuteInTransactionAsync(async () =>
+        {
+            var creationResult = await _transferRepository.CreateAsync(
+                transfer,
+                cancellationToken);
+            if (creationResult.Status == InternalTransferCreationStatus.Success)
+            {
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
+
+            return creationResult;
+        }, cancellationToken);
         return result.Status switch
         {
             InternalTransferCreationStatus.SourceWalletNotFound =>

@@ -7,10 +7,12 @@ namespace FlowFi.FinanceCoreService.Services;
 public class WalletService : IWalletService
 {
     private readonly IWalletRepository _walletRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public WalletService(IWalletRepository walletRepository)
+    public WalletService(IWalletRepository walletRepository, IUnitOfWork unitOfWork)
     {
         _walletRepository = walletRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<IReadOnlyList<WalletDto>> GetAllAsync(
@@ -47,6 +49,7 @@ public class WalletService : IWalletService
         };
 
         var createdWallet = await _walletRepository.AddAsync(wallet, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
         return MapToDto(createdWallet);
     }
 
@@ -70,6 +73,7 @@ public class WalletService : IWalletService
         wallet.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _walletRepository.UpdateAsync(wallet, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
         return MapToDto(wallet);
     }
 
@@ -84,6 +88,7 @@ public class WalletService : IWalletService
         }
 
         await _walletRepository.DeleteAsync(wallet, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
         return true;
     }
 

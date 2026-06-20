@@ -5,6 +5,8 @@ namespace FlowFi.FinanceCoreService.Services;
 public enum CreateTransactionStatus
 {
     Success,
+    InvalidWalletId,
+    InvalidTransactionType,
     WalletNotFound,
     WalletInactive,
     TagNotFound,

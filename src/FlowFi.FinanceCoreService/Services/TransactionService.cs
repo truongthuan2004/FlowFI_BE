@@ -7,10 +7,14 @@ namespace FlowFi.FinanceCoreService.Services;
 public class TransactionService : ITransactionService
 {
     private readonly ITransactionRepository _transactionRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public TransactionService(ITransactionRepository transactionRepository)
+    public TransactionService(
+        ITransactionRepository transactionRepository,
+        IUnitOfWork unitOfWork)
     {
         _transactionRepository = transactionRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<CreateTransactionResult> CreateAsync(
@@ -20,7 +24,17 @@ public class TransactionService : ITransactionService
         DateTimeOffset? transactionDate,
         CancellationToken cancellationToken = default)
     {
+        if (walletId == Guid.Empty)
+        {
+            return new CreateTransactionResult(CreateTransactionStatus.InvalidWalletId);
+        }
+
         var type = request.Type.Trim().ToUpperInvariant();
+        if (type is not ("INCOME" or "EXPENSE"))
+        {
+            return new CreateTransactionResult(CreateTransactionStatus.InvalidTransactionType);
+        }
+
         var now = DateTimeOffset.UtcNow;
         var transaction = new Transaction
         {
@@ -39,11 +53,25 @@ public class TransactionService : ITransactionService
             UpdatedAt = now
         };
 
-        var balanceChange = type == "EXPENSE" ? -request.Amount : request.Amount;
-        var result = await _transactionRepository.CreateAsync(
-            transaction,
-            balanceChange,
-            cancellationToken);
+        var balanceChange = type switch
+        {
+            "INCOME" => request.Amount,
+            "EXPENSE" => -request.Amount,
+            _ => throw new InvalidOperationException("Unsupported transaction type.")
+        };
+        var result = await _unitOfWork.ExecuteInTransactionAsync(async () =>
+        {
+            var creationResult = await _transactionRepository.CreateAsync(
+                transaction,
+                balanceChange,
+                cancellationToken);
+            if (creationResult.Status == TransactionCreationStatus.Success)
+            {
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
+
+            return creationResult;
+        }, cancellationToken);
 
         return result.Status switch
         {
