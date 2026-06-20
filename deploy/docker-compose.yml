@@ -146,6 +146,10 @@ services:
       AiProvider__ApiKey: ${AI_PROVIDER_API_KEY:-}
       AiProvider__ReasoningEffort: ${AI_PROVIDER_REASONING_EFFORT:-low}
       AiProvider__Verbosity: ${AI_PROVIDER_VERBOSITY:-low}
+      SupabaseStorage__BaseUrl: ${SUPABASE_URL:-https://jxslxbxhyclfkfrjlnic.supabase.co}
+      SupabaseStorage__ApiKey: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      SupabaseStorage__BucketName: ${SUPABASE_STORAGE_BUCKET:-Image}
+      SupabaseStorage__Folder: ${SUPABASE_STORAGE_FOLDER:-ai-processing}
     ports:
       - "5103:8080"
     depends_on:

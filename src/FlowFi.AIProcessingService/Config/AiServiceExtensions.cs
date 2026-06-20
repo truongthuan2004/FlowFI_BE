@@ -14,13 +14,14 @@ public static class AiServiceExtensions
     {
         services.Configure<ImageUploadOptions>(configuration.GetSection("ImageUpload"));
         services.Configure<AiProviderOptions>(configuration.GetSection("AiProvider"));
+        services.Configure<SupabaseStorageOptions>(configuration.GetSection(SupabaseStorageOptions.SectionName));
         services.AddFlowFiPostgres<AiProcessingDbContext>(configuration);
         services.AddFlowFiJwt(configuration);
         services.AddScoped<IAiProcessingRepository, AiProcessingRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IAiProcessingService, Services.AiProcessingService>();
         services.AddScoped<IReceiptParserService, ReceiptParserService>();
-        services.AddScoped<IImageStorageService, LocalImageStorageService>();
+        services.AddHttpClient<IImageStorageService, SupabaseImageStorageService>();
         services.AddHttpClient<IAiModelClient, AiModelClient>()
             .ConfigurePrimaryHttpMessageHandler(CreateNoProxyHandler);
         services.AddControllers();
