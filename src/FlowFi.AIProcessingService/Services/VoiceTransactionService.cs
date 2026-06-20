@@ -3,22 +3,22 @@ using FlowFi.AIProcessingService.Interface;
 
 namespace FlowFi.AIProcessingService.Services;
 
-public sealed class ImageTransactionService(
+public sealed class VoiceTransactionService(
     IAiProcessingService aiProcessingService,
-    IFinanceTransactionCreationService transactionCreationService) : IImageTransactionService
+    IFinanceTransactionCreationService transactionCreationService) : IVoiceTransactionService
 {
-    public async Task<ImageTransactionResponseDto> CreateFromImageAsync(
+    public async Task<VoiceTransactionResponseDto> CreateFromVoiceAsync(
         Guid userId,
         Guid walletId,
-        IFormFile image,
-        string? mockExtractedText,
+        IFormFile voice,
+        string? mockTranscribedText,
         string bearerToken,
         CancellationToken cancellationToken)
     {
-        var aiResult = await aiProcessingService.ProcessImageAsync(
+        var aiResult = await aiProcessingService.ProcessVoiceAsync(
             userId,
-            image,
-            mockExtractedText,
+            voice,
+            mockTranscribedText,
             cancellationToken);
         var financeResult = await transactionCreationService.CreateAsync(
             walletId,
@@ -26,10 +26,10 @@ public sealed class ImageTransactionService(
             bearerToken,
             cancellationToken);
 
-        return new ImageTransactionResponseDto(
+        return new VoiceTransactionResponseDto(
             aiResult.RequestId,
             aiResult.ResultId,
-            aiResult.ImageUrl,
+            aiResult.VoiceUrl,
             aiResult.RawText,
             aiResult.ParsedData,
             financeResult.Tag,

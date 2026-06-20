@@ -7,4 +7,10 @@ public static class AiPrompts
         Return only the raw text, preserving amounts, dates, merchant names, and Vietnamese accents when visible.
         Do not explain the image.
         """;
+
+    public const string VoiceTransactionTranscription = """
+        Transcribe this Vietnamese personal-finance voice note accurately.
+        Preserve the amount, transaction type, merchant or purpose, and transaction date when spoken.
+        Return only the spoken text. Do not explain or summarize it.
+        """;
 }

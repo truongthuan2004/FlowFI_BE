@@ -9,4 +9,11 @@ public interface IAiModelClient
         string contentType,
         string? mockExtractedText,
         CancellationToken cancellationToken);
+
+    Task<AiTextExtractionResultDto> TranscribeVoiceAsync(
+        byte[] audioBytes,
+        string fileName,
+        string contentType,
+        string? mockTranscribedText,
+        CancellationToken cancellationToken);
 }

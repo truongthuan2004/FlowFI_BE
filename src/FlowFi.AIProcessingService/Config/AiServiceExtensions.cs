@@ -14,6 +14,7 @@ public static class AiServiceExtensions
     public static IServiceCollection AddAiService(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<ImageUploadOptions>(configuration.GetSection("ImageUpload"));
+        services.Configure<AudioUploadOptions>(configuration.GetSection("AudioUpload"));
         services.Configure<AiProviderOptions>(configuration.GetSection("AiProvider"));
         services.AddOptions<SupabaseStorageOptions>()
             .Bind(configuration.GetSection(SupabaseStorageOptions.SectionName))
@@ -33,9 +34,11 @@ public static class AiServiceExtensions
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IAiProcessingService, Services.AiProcessingService>();
         services.AddScoped<IReceiptParserService, ReceiptParserService>();
-        services.AddHttpClient<IImageStorageService, SupabaseImageStorageService>();
+        services.AddHttpClient<IFileStorageService, SupabaseFileStorageService>();
         services.AddScoped<IFinanceTransactionsClient, FinanceTransactionsGrpcClient>();
+        services.AddScoped<IFinanceTransactionCreationService, FinanceTransactionCreationService>();
         services.AddScoped<IImageTransactionService, ImageTransactionService>();
+        services.AddScoped<IVoiceTransactionService, VoiceTransactionService>();
         services.AddHttpClient<IAiModelClient, AiModelClient>()
             .ConfigurePrimaryHttpMessageHandler(CreateNoProxyHandler);
         services.AddGrpcClient<FinanceTransactions.FinanceTransactionsClient>(options =>

@@ -20,6 +20,11 @@ public sealed record FinanceTransactionDto(
     DateTimeOffset TransactionDate,
     DateTimeOffset CreatedAt);
 
+public sealed record FinanceTransactionCreationResultDto(
+    FinanceTagDto Tag,
+    bool TagCreated,
+    FinanceTransactionDto Transaction);
+
 public sealed record ImageTransactionResponseDto(
     Guid AiRequestId,
     Guid? AiResultId,

@@ -43,7 +43,9 @@ public sealed class AiProcessingDbContext(DbContextOptions<AiProcessingDbContext
             entity.ToTable("ai_processing_result", table =>
             {
                 table.HasCheckConstraint("chk_ai_result_transaction_type", "transaction_type IN ('INCOME', 'EXPENSE')");
-                table.HasCheckConstraint("chk_ai_result_tag", "tag IN ('FOOD', 'TRANSPORT', 'SHOPPING', 'EDUCATION')");
+                table.HasCheckConstraint(
+                    "chk_ai_result_tag",
+                    "tag IN ('FOOD', 'TRANSPORT', 'SHOPPING', 'EDUCATION', 'TRANSFER', 'SALARY', 'UTILITIES', 'HEALTH')");
             });
 
             entity.HasKey(x => x.Id);

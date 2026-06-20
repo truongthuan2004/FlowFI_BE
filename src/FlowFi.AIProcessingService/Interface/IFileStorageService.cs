@@ -1,11 +1,12 @@
 namespace FlowFi.AIProcessingService.Interface;
 
-public interface IImageStorageService
+public interface IFileStorageService
 {
     Task<string> SaveAsync(
-        byte[] imageBytes,
+        byte[] fileBytes,
         string fileName,
         string contentType,
         Guid requestId,
+        string category,
         CancellationToken cancellationToken);
 }

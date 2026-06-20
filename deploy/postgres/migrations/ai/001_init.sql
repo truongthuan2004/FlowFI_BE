@@ -30,7 +30,9 @@ CREATE TABLE ai_processing_result (
         REFERENCES ai_processing_request(id)
         ON DELETE CASCADE,
     CONSTRAINT chk_ai_result_transaction_type CHECK (transaction_type IN ('INCOME', 'EXPENSE')),
-    CONSTRAINT chk_ai_result_tag CHECK (tag IN ('FOOD', 'TRANSPORT', 'SHOPPING', 'EDUCATION'))
+    CONSTRAINT chk_ai_result_tag CHECK (
+        tag IN ('FOOD', 'TRANSPORT', 'SHOPPING', 'EDUCATION', 'TRANSFER', 'SALARY', 'UTILITIES', 'HEALTH')
+    )
 );
 
 INSERT INTO ai_processing_request

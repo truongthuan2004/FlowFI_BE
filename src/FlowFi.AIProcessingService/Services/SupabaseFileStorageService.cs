@@ -5,27 +5,27 @@ using Microsoft.Extensions.Options;
 
 namespace FlowFi.AIProcessingService.Services;
 
-public sealed class SupabaseImageStorageService(
+public sealed class SupabaseFileStorageService(
     HttpClient httpClient,
-    IOptions<SupabaseStorageOptions> options) : IImageStorageService
+    IOptions<SupabaseStorageOptions> options) : IFileStorageService
 {
     private readonly SupabaseStorageOptions _options = options.Value;
 
     public async Task<string> SaveAsync(
-        byte[] imageBytes,
+        byte[] fileBytes,
         string fileName,
         string contentType,
         Guid requestId,
+        string category,
         CancellationToken cancellationToken)
     {
-        ValidateConfiguration();
-
-        var objectPath = BuildObjectPath($"{requestId:N}{GetSafeExtension(fileName, contentType)}");
+        var extension = GetSafeExtension(fileName, contentType);
+        var objectPath = BuildObjectPath(category, $"{requestId:N}{extension}");
         using var request = new HttpRequestMessage(HttpMethod.Post, BuildUrl("object", objectPath));
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
         request.Headers.TryAddWithoutValidation("apikey", _options.ApiKey);
         request.Headers.TryAddWithoutValidation("x-upsert", "true");
-        request.Content = new ByteArrayContent(imageBytes);
+        request.Content = new ByteArrayContent(fileBytes);
         request.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(contentType);
 
         using var response = await httpClient.SendAsync(request, cancellationToken);
@@ -39,10 +39,12 @@ public sealed class SupabaseImageStorageService(
         return BuildUrl("object/public", objectPath);
     }
 
-    private string BuildObjectPath(string fileName)
+    private string BuildObjectPath(string category, string storedFileName)
     {
-        var folder = _options.Folder.Trim('/');
-        return string.IsNullOrWhiteSpace(folder) ? fileName : $"{folder}/{fileName}";
+        var parts = new[] { _options.Folder, category, storedFileName }
+            .Select(part => part.Trim('/'))
+            .Where(part => !string.IsNullOrWhiteSpace(part));
+        return string.Join('/', parts);
     }
 
     private string BuildUrl(string operation, string objectPath)
@@ -52,28 +54,16 @@ public sealed class SupabaseImageStorageService(
         return $"{_options.BaseUrl.TrimEnd('/')}/storage/v1/{operation}/{encodedBucket}/{encodedPath}";
     }
 
-    private void ValidateConfiguration()
-    {
-        if (!Uri.TryCreate(_options.BaseUrl, UriKind.Absolute, out _))
-        {
-            throw new InvalidOperationException("SupabaseStorage:BaseUrl is invalid.");
-        }
-
-        if (string.IsNullOrWhiteSpace(_options.ApiKey))
-        {
-            throw new InvalidOperationException("SupabaseStorage:ApiKey is required.");
-        }
-
-        if (string.IsNullOrWhiteSpace(_options.BucketName))
-        {
-            throw new InvalidOperationException("SupabaseStorage:BucketName is required.");
-        }
-    }
-
     private static string GetSafeExtension(string fileName, string contentType)
     {
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
-        if (extension is ".jpg" or ".jpeg" or ".png" or ".webp")
+        var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ".jpg", ".jpeg", ".png", ".webp",
+            ".mp3", ".wav", ".m4a", ".mp4", ".aac", ".ogg", ".webm"
+        };
+
+        if (allowedExtensions.Contains(extension))
         {
             return extension;
         }
@@ -82,7 +72,13 @@ public sealed class SupabaseImageStorageService(
         {
             "image/png" => ".png",
             "image/webp" => ".webp",
-            _ => ".jpg"
+            "audio/wav" or "audio/x-wav" => ".wav",
+            "audio/mp4" or "audio/x-m4a" => ".m4a",
+            "audio/webm" => ".webm",
+            "audio/ogg" => ".ogg",
+            "audio/aac" => ".aac",
+            "audio/mpeg" or "audio/mp3" => ".mp3",
+            _ => ".bin"
         };
     }
 }

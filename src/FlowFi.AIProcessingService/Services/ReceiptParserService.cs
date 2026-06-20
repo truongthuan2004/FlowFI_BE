@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
 using FlowFi.AIProcessingService.DTOs;
 using FlowFi.AIProcessingService.Interface;
@@ -9,13 +10,14 @@ public sealed partial class ReceiptParserService : IReceiptParserService
 {
     public ParsedAiTransactionDto Parse(string rawText)
     {
-        var normalizedText = rawText.Trim();
+        var rawValue = rawText.Trim();
+        var searchableValue = NormalizeForMatching(rawValue);
         return new ParsedAiTransactionDto(
-            ExtractAmount(normalizedText),
-            ExtractTransactionType(normalizedText),
-            ExtractTag(normalizedText),
-            ExtractDate(normalizedText),
-            normalizedText);
+            ExtractAmount(searchableValue),
+            ExtractTransactionType(searchableValue),
+            ExtractTag(searchableValue),
+            ExtractDate(rawValue),
+            rawValue);
     }
 
     private static decimal? ExtractAmount(string text)
@@ -45,24 +47,17 @@ public sealed partial class ReceiptParserService : IReceiptParserService
         }
 
         var unit = match.Groups["unit"].Value.ToLowerInvariant();
-        return unit is "k" or "nghin" or "nghìn" ? amount * 1000 : amount;
+        return unit is "k" or "nghin" ? amount * 1000 : amount;
     }
 
     private static string? ExtractTransactionType(string text)
     {
-        var lowerText = text.ToLowerInvariant();
-        if (ContainsAny(
-                lowerText,
-                "luong", "lương", "nhan tien", "nhận tiền", "tien vao", "tiền vào",
-                "credited", "received", "income"))
+        if (ContainsAny(text, "luong", "nhan tien", "tien vao", "credited", "received", "income"))
         {
             return "INCOME";
         }
 
-        if (ContainsAny(
-                lowerText,
-                "chi", "mua", "tra", "trả", "thanh toan", "thanh toán", "chuyen khoan",
-                "chuyển khoản", "total", "tong tien", "tổng tiền", "expense"))
+        if (ContainsAny(text, "chi", "mua", "tra", "thanh toan", "chuyen khoan", "total", "tong tien", "expense"))
         {
             return "EXPENSE";
         }
@@ -72,47 +67,14 @@ public sealed partial class ReceiptParserService : IReceiptParserService
 
     private static string? ExtractTag(string text)
     {
-        var lowerText = text.ToLowerInvariant();
-        if (ContainsAny(lowerText, "chuyen khoan", "chuyển khoản", "bank transfer", "ngan hang", "ngân hàng"))
-        {
-            return "TRANSFER";
-        }
-
-        if (ContainsAny(lowerText, "luong", "lương", "salary", "payroll"))
-        {
-            return "SALARY";
-        }
-
-        if (ContainsAny(lowerText, "an", "ăn", "food", "com", "cơm", "pho", "phở", "cafe"))
-        {
-            return "FOOD";
-        }
-
-        if (ContainsAny(lowerText, "xang", "xăng", "xe", "grab", "taxi", "transport"))
-        {
-            return "TRANSPORT";
-        }
-
-        if (ContainsAny(lowerText, "mua", "shopping", "hoa don", "hóa đơn", "sieuthi", "siêu thị"))
-        {
-            return "SHOPPING";
-        }
-
-        if (ContainsAny(lowerText, "hoc", "học", "sach", "sách", "education"))
-        {
-            return "EDUCATION";
-        }
-
-        if (ContainsAny(lowerText, "dien", "điện", "nuoc", "nước", "internet", "utilities"))
-        {
-            return "UTILITIES";
-        }
-
-        if (ContainsAny(lowerText, "thuoc", "thuốc", "benh vien", "bệnh viện", "health", "medical"))
-        {
-            return "HEALTH";
-        }
-
+        if (ContainsAny(text, "chuyen khoan", "bank transfer", "ngan hang")) return "TRANSFER";
+        if (ContainsAny(text, "luong", "salary", "payroll")) return "SALARY";
+        if (ContainsAny(text, "an", "food", "com", "pho", "cafe")) return "FOOD";
+        if (ContainsAny(text, "xang", "xe", "grab", "taxi", "transport")) return "TRANSPORT";
+        if (ContainsAny(text, "mua", "shopping", "hoa don", "sieu thi")) return "SHOPPING";
+        if (ContainsAny(text, "hoc", "sach", "education")) return "EDUCATION";
+        if (ContainsAny(text, "dien", "nuoc", "internet", "utilities")) return "UTILITIES";
+        if (ContainsAny(text, "thuoc", "benh vien", "health", "medical")) return "HEALTH";
         return null;
     }
 
@@ -134,10 +96,28 @@ public sealed partial class ReceiptParserService : IReceiptParserService
             : null;
     }
 
-    private static bool ContainsAny(string text, params string[] keywords)
-        => keywords.Any(text.Contains);
+    private static string NormalizeForMatching(string value)
+    {
+        var decomposed = value.Trim().ToLowerInvariant().Normalize(NormalizationForm.FormD);
+        var builder = new StringBuilder(decomposed.Length);
+        foreach (var character in decomposed)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(character) != UnicodeCategory.NonSpacingMark)
+            {
+                builder.Append(character == 'đ' ? 'd' : character);
+            }
+        }
 
-    [GeneratedRegex(@"(?<amount>\d{1,3}(?:[.,]\d{3})+|\d+)\s*(?<unit>k|nghin|nghìn|vnd|đ|dong|đồng)?", RegexOptions.IgnoreCase)]
+        return builder.ToString().Normalize(NormalizationForm.FormC);
+    }
+
+    private static bool ContainsAny(string text, params string[] keywords)
+        => keywords.Any(keyword => Regex.IsMatch(
+            text,
+            $@"\b{Regex.Escape(keyword)}\b",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant));
+
+    [GeneratedRegex(@"(?<amount>\d{1,3}(?:[.,]\d{3})+|\d+)\s*(?<unit>k|nghin|vnd|d|dong)?", RegexOptions.IgnoreCase)]
     private static partial Regex AmountRegex();
 
     [GeneratedRegex(@"\b\d{1,2}[/-]\d{1,2}[/-]\d{4}\b")]
