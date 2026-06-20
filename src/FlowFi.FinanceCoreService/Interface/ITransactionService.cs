@@ -8,6 +8,7 @@ public interface ITransactionService
         Guid userId,
         Guid walletId,
         CreateTransactionDto request,
+        DateTimeOffset? transactionDate,
         CancellationToken cancellationToken = default);
 }
 

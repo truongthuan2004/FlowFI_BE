@@ -14,19 +14,19 @@ public sealed class AnalyticsService(IAnalyticsRepository repository, IAnalytics
         return budgets.Select(ToBudgetResponse).ToList();
     }
 
-    public async Task<BudgetResponse?> GetBudgetAsync(Guid budgetId, CancellationToken cancellationToken)
+    public async Task<BudgetResponse?> GetBudgetAsync(Guid userId, Guid budgetId, CancellationToken cancellationToken)
     {
-        var budget = await repository.GetBudgetAsync(budgetId, cancellationToken);
+        var budget = await repository.GetBudgetAsync(userId, budgetId, cancellationToken);
         return budget is null ? null : ToBudgetResponse(budget);
     }
 
-    public async Task<BudgetResponse> CreateBudgetAsync(CreateBudgetRequest request, CancellationToken cancellationToken)
+    public async Task<BudgetResponse> CreateBudgetAsync(Guid userId, CreateBudgetRequest request, CancellationToken cancellationToken)
     {
         var now = DateTimeOffset.UtcNow;
         var budget = new Budget
         {
             Id = Guid.NewGuid(),
-            UserId = request.UserId,
+            UserId = userId,
             TagId = request.TagId,
             TagName = request.TagName,
             Name = request.Name.Trim(),
@@ -44,9 +44,9 @@ public sealed class AnalyticsService(IAnalyticsRepository repository, IAnalytics
         return ToBudgetResponse(created);
     }
 
-    public async Task<BudgetResponse?> UpdateBudgetAsync(Guid budgetId, UpdateBudgetRequest request, CancellationToken cancellationToken)
+    public async Task<BudgetResponse?> UpdateBudgetAsync(Guid userId, Guid budgetId, UpdateBudgetRequest request, CancellationToken cancellationToken)
     {
-        var budget = await repository.GetBudgetAsync(budgetId, cancellationToken);
+        var budget = await repository.GetBudgetAsync(userId, budgetId, cancellationToken);
         if (budget is null)
         {
             return null;
@@ -68,9 +68,9 @@ public sealed class AnalyticsService(IAnalyticsRepository repository, IAnalytics
         return ToBudgetResponse(budget);
     }
 
-    public async Task<bool> DeleteBudgetAsync(Guid budgetId, CancellationToken cancellationToken)
+    public async Task<bool> DeleteBudgetAsync(Guid userId, Guid budgetId, CancellationToken cancellationToken)
     {
-        var budget = await repository.GetBudgetAsync(budgetId, cancellationToken);
+        var budget = await repository.GetBudgetAsync(userId, budgetId, cancellationToken);
         if (budget is null)
         {
             return false;
@@ -89,19 +89,19 @@ public sealed class AnalyticsService(IAnalyticsRepository repository, IAnalytics
         return goals.Select(ToSavingGoalResponse).ToList();
     }
 
-    public async Task<SavingGoalResponse?> GetSavingGoalAsync(Guid goalId, CancellationToken cancellationToken)
+    public async Task<SavingGoalResponse?> GetSavingGoalAsync(Guid userId, Guid goalId, CancellationToken cancellationToken)
     {
-        var goal = await repository.GetSavingGoalAsync(goalId, cancellationToken);
+        var goal = await repository.GetSavingGoalAsync(userId, goalId, cancellationToken);
         return goal is null ? null : ToSavingGoalResponse(goal);
     }
 
-    public async Task<SavingGoalResponse> CreateSavingGoalAsync(CreateSavingGoalRequest request, CancellationToken cancellationToken)
+    public async Task<SavingGoalResponse> CreateSavingGoalAsync(Guid userId, CreateSavingGoalRequest request, CancellationToken cancellationToken)
     {
         var now = DateTimeOffset.UtcNow;
         var goal = new SavingGoal
         {
             Id = Guid.NewGuid(),
-            UserId = request.UserId,
+            UserId = userId,
             Name = request.Name.Trim(),
             Description = request.Description,
             TargetAmount = request.TargetAmount,
@@ -117,9 +117,9 @@ public sealed class AnalyticsService(IAnalyticsRepository repository, IAnalytics
         return ToSavingGoalResponse(created);
     }
 
-    public async Task<SavingGoalResponse?> UpdateSavingGoalAsync(Guid goalId, UpdateSavingGoalRequest request, CancellationToken cancellationToken)
+    public async Task<SavingGoalResponse?> UpdateSavingGoalAsync(Guid userId, Guid goalId, UpdateSavingGoalRequest request, CancellationToken cancellationToken)
     {
-        var goal = await repository.GetSavingGoalAsync(goalId, cancellationToken);
+        var goal = await repository.GetSavingGoalAsync(userId, goalId, cancellationToken);
         if (goal is null)
         {
             return null;
@@ -139,9 +139,9 @@ public sealed class AnalyticsService(IAnalyticsRepository repository, IAnalytics
         return ToSavingGoalResponse(goal);
     }
 
-    public async Task<SavingGoalResponse?> UpdateGoalProgressAsync(Guid goalId, UpdateGoalProgressRequest request, CancellationToken cancellationToken)
+    public async Task<SavingGoalResponse?> UpdateGoalProgressAsync(Guid userId, Guid goalId, UpdateGoalProgressRequest request, CancellationToken cancellationToken)
     {
-        var goal = await repository.GetSavingGoalAsync(goalId, cancellationToken);
+        var goal = await repository.GetSavingGoalAsync(userId, goalId, cancellationToken);
         if (goal is null)
         {
             return null;
@@ -154,9 +154,9 @@ public sealed class AnalyticsService(IAnalyticsRepository repository, IAnalytics
         return ToSavingGoalResponse(goal);
     }
 
-    public async Task<bool> DeleteSavingGoalAsync(Guid goalId, CancellationToken cancellationToken)
+    public async Task<bool> DeleteSavingGoalAsync(Guid userId, Guid goalId, CancellationToken cancellationToken)
     {
-        var goal = await repository.GetSavingGoalAsync(goalId, cancellationToken);
+        var goal = await repository.GetSavingGoalAsync(userId, goalId, cancellationToken);
         if (goal is null)
         {
             return false;
@@ -169,9 +169,9 @@ public sealed class AnalyticsService(IAnalyticsRepository repository, IAnalytics
         return true;
     }
 
-    public async Task<IReadOnlyList<GoalContributionResponse>?> GetGoalContributionsAsync(Guid goalId, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<GoalContributionResponse>?> GetGoalContributionsAsync(Guid userId, Guid goalId, CancellationToken cancellationToken)
     {
-        var goal = await repository.GetSavingGoalAsync(goalId, cancellationToken);
+        var goal = await repository.GetSavingGoalAsync(userId, goalId, cancellationToken);
         if (goal is null)
         {
             return null;
@@ -181,9 +181,9 @@ public sealed class AnalyticsService(IAnalyticsRepository repository, IAnalytics
         return contributions.Select(ToGoalContributionResponse).ToList();
     }
 
-    public async Task<GoalContributionResponse?> AddGoalContributionAsync(Guid goalId, CreateGoalContributionRequest request, CancellationToken cancellationToken)
+    public async Task<GoalContributionResponse?> AddGoalContributionAsync(Guid userId, Guid goalId, CreateGoalContributionRequest request, CancellationToken cancellationToken)
     {
-        var goal = await repository.GetSavingGoalAsync(goalId, cancellationToken);
+        var goal = await repository.GetSavingGoalAsync(userId, goalId, cancellationToken);
         if (goal is null)
         {
             return null;

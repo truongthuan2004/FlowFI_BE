@@ -12,6 +12,10 @@ EnvironmentFile.Load("GATEWAY");
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+
 builder.Services.AddGatewayAuthentication(builder.Configuration);
 builder.Services.AddGatewayAuthorization();
 builder.Services.AddGatewayRateLimiting();

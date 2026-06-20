@@ -7,7 +7,6 @@ public sealed class CreateSavingGoalRequestValidator : AbstractValidator<CreateS
 {
     public CreateSavingGoalRequestValidator()
     {
-        RuleFor(x => x.UserId).NotEmpty();
         RuleFor(x => x.Name).NotEmpty().MaximumLength(150);
         RuleFor(x => x.TargetAmount).GreaterThan(0);
         RuleFor(x => x.CurrentAmount)
@@ -16,14 +15,6 @@ public sealed class CreateSavingGoalRequestValidator : AbstractValidator<CreateS
         RuleFor(x => x.PriorityLevel)
             .Must(AnalyticsValidationRules.BeValidPriorityLevel)
             .WithMessage("PriorityLevel must be Low, Medium, or High.");
-    }
-}
-
-public sealed class GetSavingGoalsQueryValidator : AbstractValidator<GetSavingGoalsQuery>
-{
-    public GetSavingGoalsQueryValidator()
-    {
-        RuleFor(x => x.UserId).NotEmpty();
     }
 }
 

@@ -1,9 +1,6 @@
 namespace FlowFi.AnalyticsService.DTOs;
 
-public sealed record GetSavingGoalsQuery(Guid UserId);
-
 public sealed record CreateSavingGoalRequest(
-    Guid UserId,
     string Name,
     string? Description,
     decimal TargetAmount,

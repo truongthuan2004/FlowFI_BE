@@ -70,6 +70,24 @@ Each service has its own PostgreSQL container and can be tested directly:
 | Notification | `http://localhost:5105` | `http://localhost:5105/swagger` | `notification-db` | `6004` | `FlowFi_Notification` |
 | WebSocket Gateway | `http://localhost:5106` | n/a | n/a | n/a | n/a |
 
+Finance Core also exposes an internal HTTP/2 gRPC endpoint on
+`http://localhost:7102`. AI Processing uses it to resolve tags and create
+transactions without accessing the Finance database directly.
+
+Create a Finance transaction from a receipt, shopping bill, or bank-transfer image:
+
+```text
+POST http://localhost:5103/api/ai-processing/images/transactions
+Authorization: Bearer <access-token>
+Content-Type: multipart/form-data
+
+WalletId=<wallet-uuid>
+Image=<image-file>
+```
+
+The API extracts the amount/type/date, reuses a matching user tag or creates one,
+then creates the transaction in Finance Core with source `AI` and status `SYNCED`.
+
 Run a single service for testing:
 
 ```powershell

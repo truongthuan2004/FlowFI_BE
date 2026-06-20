@@ -17,6 +17,7 @@ public class TransactionService : ITransactionService
         Guid userId,
         Guid walletId,
         CreateTransactionDto request,
+        DateTimeOffset? transactionDate,
         CancellationToken cancellationToken = default)
     {
         var type = request.Type.Trim().ToUpperInvariant();
@@ -33,7 +34,7 @@ public class TransactionService : ITransactionService
             Note = request.Note.Trim(),
             Source = request.Source.Trim().ToUpperInvariant(),
             SyncStatus = "SYNCED",
-            TransactionDate = now,
+            TransactionDate = transactionDate ?? now,
             CreatedAt = now,
             UpdatedAt = now
         };

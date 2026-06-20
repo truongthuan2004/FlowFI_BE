@@ -140,6 +140,8 @@ services:
       dockerfile: src/FlowFi.FinanceCoreService/Dockerfile
     environment:
       ASPNETCORE_URLS: http://+:8080
+      ServicePorts__Http: 8080
+      ServicePorts__Grpc: 8081
       ConnectionStrings__Default: Host=finance-db;Port=5432;Database=${FINANCE_DB_NAME:-FlowFi_FinanceCore};Username=${POSTGRES_USER:?POSTGRES_USER is required};Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       RabbitMq__Host: rabbitmq
       RabbitMq__Username: ${RABBITMQ_USER:?RABBITMQ_USER is required}
@@ -149,6 +151,7 @@ services:
       Jwt__SigningKey: ${JWT_SIGNING_KEY:?JWT_SIGNING_KEY is required}
     ports:
       - "5102:8080"
+      - "7102:8081"
     depends_on:
       finance-db:
         condition: service_healthy
@@ -172,11 +175,14 @@ services:
       Jwt__Issuer: ${JWT_ISSUER:-FlowFi}
       Jwt__Audience: ${JWT_AUDIENCE:-FlowFi.Clients}
       Jwt__SigningKey: ${JWT_SIGNING_KEY:?JWT_SIGNING_KEY is required}
+      FinanceGrpc__Address: http://finance-service:8081
     ports:
       - "5103:8080"
     depends_on:
       ai-db:
         condition: service_healthy
+      finance-service:
+        condition: service_started
 
   analytics-service:
     build:

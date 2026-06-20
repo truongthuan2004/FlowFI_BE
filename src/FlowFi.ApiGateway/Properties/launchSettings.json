@@ -3,10 +3,11 @@
     "FlowFi.ApiGateway": {
       "commandName": "Project",
       "launchBrowser": true,
+      "launchUrl": "docs",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "https://localhost:50827;http://localhost:50829"
+      "applicationUrl": "http://localhost:8080"
     }
   }
 }

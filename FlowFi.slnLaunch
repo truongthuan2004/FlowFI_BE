@@ -1,0 +1,44 @@
+[
+  {
+    "Name": "Gateway Only",
+    "Projects": [
+      {
+        "Path": "src\\FlowFi.ApiGateway\\FlowFi.ApiGateway.csproj",
+        "Action": "Start"
+      }
+    ]
+  },
+  {
+    "Name": "All Services",
+    "Projects": [
+      {
+        "Path": "src\\FlowFi.AuthUserService\\FlowFi.AuthUserService.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\FlowFi.FinanceCoreService\\FlowFi.FinanceCoreService.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\FlowFi.AIProcessingService\\FlowFi.AIProcessingService.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\FlowFi.AnalyticsService\\FlowFi.AnalyticsService.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\FlowFi.NotificationService\\FlowFi.NotificationService.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\FlowFi.WebSocketGateway\\FlowFi.WebSocketGateway.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\FlowFi.ApiGateway\\FlowFi.ApiGateway.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
