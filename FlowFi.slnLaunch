@@ -9,6 +9,10 @@
       {
         "Path": "src\\FlowFi.FinanceCoreService\\FlowFi.FinanceCoreService.csproj",
         "Action": "Start"
+      },
+      {
+        "Path": "src\\FlowFi.AIProcessingService\\FlowFi.AIProcessingService.csproj",
+        "Action": "Start"
       }
     ]
   },

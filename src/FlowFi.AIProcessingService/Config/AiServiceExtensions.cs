@@ -15,12 +15,24 @@ public static class AiServiceExtensions
     {
         services.Configure<ImageUploadOptions>(configuration.GetSection("ImageUpload"));
         services.Configure<AiProviderOptions>(configuration.GetSection("AiProvider"));
+        services.AddOptions<SupabaseStorageOptions>()
+            .Bind(configuration.GetSection(SupabaseStorageOptions.SectionName))
+            .Validate(
+                options => Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out _),
+                "SupabaseStorage:BaseUrl must be a valid absolute URL.")
+            .Validate(
+                options => !string.IsNullOrWhiteSpace(options.ApiKey),
+                "SupabaseStorage:ApiKey is required.")
+            .Validate(
+                options => !string.IsNullOrWhiteSpace(options.BucketName),
+                "SupabaseStorage:BucketName is required.")
+            .ValidateOnStart();
         services.AddFlowFiPostgres<AiProcessingDbContext>(configuration);
         services.AddFlowFiJwt(configuration);
         services.AddScoped<IAiProcessingRepository, AiProcessingRepository>();
         services.AddScoped<IAiProcessingService, Services.AiProcessingService>();
         services.AddScoped<IReceiptParserService, ReceiptParserService>();
-        services.AddScoped<IImageStorageService, LocalImageStorageService>();
+        services.AddHttpClient<IImageStorageService, SupabaseImageStorageService>();
         services.AddScoped<IFinanceTransactionsClient, FinanceTransactionsGrpcClient>();
         services.AddScoped<IImageTransactionService, ImageTransactionService>();
         services.AddHttpClient<IAiModelClient, AiModelClient>()
