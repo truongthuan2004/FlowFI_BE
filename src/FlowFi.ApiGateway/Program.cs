@@ -24,7 +24,19 @@ builder.Services.AddGatewaySwagger();
 builder.Services.AddGatewayAggregation(builder.Configuration);
 builder.Services.AddHealthChecks();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
+
+app.UseCors("AllowAll");
 
 app.UseGatewayErrorHandling();
 app.UseGatewayRequestLogging();
