@@ -13,3 +13,4 @@ obj/
 Dockerfile.user
 docker-compose.override.yml
 /docs/internal/
+/tmp/pdfs/
