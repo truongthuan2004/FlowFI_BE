@@ -10,6 +10,7 @@ public sealed class AnalyticsDbContext(DbContextOptions<AnalyticsDbContext> opti
     public DbSet<SavingGoal> SavingGoals => Set<SavingGoal>();
     public DbSet<GoalContribution> GoalContributions => Set<GoalContribution>();
     public DbSet<FinancialSummary> FinancialSummaries => Set<FinancialSummary>();
+    public DbSet<TransactionSnapshot> TransactionSnapshots => Set<TransactionSnapshot>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -20,6 +21,7 @@ public sealed class AnalyticsDbContext(DbContextOptions<AnalyticsDbContext> opti
         ConfigureSavingGoal(modelBuilder);
         ConfigureGoalContribution(modelBuilder);
         ConfigureFinancialSummary(modelBuilder);
+        ConfigureTransactionSnapshot(modelBuilder);
     }
 
     private static void ConfigureBudget(ModelBuilder modelBuilder)
@@ -182,6 +184,32 @@ public sealed class AnalyticsDbContext(DbContextOptions<AnalyticsDbContext> opti
                 .HasDatabaseName("idx_financial_summaries_user_year_month");
             entity.HasIndex(x => new { x.UserId, x.Year, x.WeekNumber })
                 .HasDatabaseName("idx_financial_summaries_user_year_week");
+        });
+    }
+
+    private static void ConfigureTransactionSnapshot(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<TransactionSnapshot>(entity =>
+        {
+            entity.ToTable("transaction_snapshots", table =>
+            {
+                table.HasCheckConstraint("chk_transaction_snapshots_amount", "amount >= 0");
+                table.HasCheckConstraint("chk_transaction_snapshots_type", "type IN ('INCOME', 'EXPENSE')");
+            });
+
+            entity.HasKey(x => x.TransactionId);
+            entity.Property(x => x.TagName).HasMaxLength(100);
+            entity.Property(x => x.Amount).HasColumnType("numeric(18,2)");
+            entity.Property(x => x.Type).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.CurrencyCode).HasMaxLength(10).HasDefaultValue("VND").IsRequired();
+            entity.Property(x => x.CreatedAt).HasDefaultValueSql("NOW()");
+
+            entity.HasIndex(x => new { x.UserId, x.TransactionDate })
+                .HasDatabaseName("idx_transaction_snapshots_user_date");
+            entity.HasIndex(x => new { x.UserId, x.TagId, x.TransactionDate })
+                .HasDatabaseName("idx_transaction_snapshots_user_tag_date");
+            entity.HasIndex(x => x.DeletedAt)
+                .HasDatabaseName("idx_transaction_snapshots_deleted_at");
         });
     }
 }

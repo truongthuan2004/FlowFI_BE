@@ -29,6 +29,7 @@ public static class AnalyticsServiceExtensions
         });
         services.AddSingleton<RabbitMqPublisher>();
         services.AddSingleton<IAnalyticsEventPublisher, RabbitMqAnalyticsEventPublisher>();
+        services.AddHostedService<FinanceTransactionEventConsumer>();
         services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
         services.AddScoped<IAnalyticsService, Services.AnalyticsService>();
         services.AddValidatorsFromAssemblyContaining<CreateBudgetRequestValidator>();

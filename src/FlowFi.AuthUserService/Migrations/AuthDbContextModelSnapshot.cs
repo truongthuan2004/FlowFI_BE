@@ -270,42 +270,42 @@ namespace FlowFi.AuthUserService.Migrations
 
             modelBuilder.Entity("FlowFi.AuthUserService.Entities.PasswordResetToken", b =>
                 {
-                    b.HasOne("FlowFi.AuthUserService.Entities.PasswordResetToken", null)
+                    b.HasOne("FlowFi.AuthUserService.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_password_reset_tokens_password_reset_tokens_user_id");
+                        .HasConstraintName("fk_password_reset_tokens_users_user_id");
                 });
 
             modelBuilder.Entity("FlowFi.AuthUserService.Entities.RefreshToken", b =>
                 {
-                    b.HasOne("FlowFi.AuthUserService.Entities.RefreshToken", null)
+                    b.HasOne("FlowFi.AuthUserService.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_refresh_tokens_refresh_tokens_user_id");
+                        .HasConstraintName("fk_refresh_tokens_users_user_id");
                 });
 
             modelBuilder.Entity("FlowFi.AuthUserService.Entities.UserDevice", b =>
                 {
-                    b.HasOne("FlowFi.AuthUserService.Entities.UserDevice", null)
+                    b.HasOne("FlowFi.AuthUserService.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_user_devices_user_devices_user_id");
+                        .HasConstraintName("fk_user_devices_users_user_id");
                 });
 
             modelBuilder.Entity("FlowFi.AuthUserService.Entities.UserLog", b =>
                 {
-                    b.HasOne("FlowFi.AuthUserService.Entities.UserLog", null)
+                    b.HasOne("FlowFi.AuthUserService.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_user_logs_user_logs_user_id");
+                        .HasConstraintName("fk_user_logs_users_user_id");
                 });
 #pragma warning restore 612, 618
         }

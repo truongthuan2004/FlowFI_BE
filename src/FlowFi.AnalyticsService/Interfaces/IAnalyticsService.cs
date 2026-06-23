@@ -1,4 +1,5 @@
 using FlowFi.AnalyticsService.DTOs;
+using FlowFi.AnalyticsService.Messaging;
 namespace FlowFi.AnalyticsService.Interfaces;
 
 public interface IAnalyticsService
@@ -16,5 +17,8 @@ public interface IAnalyticsService
     Task<bool> DeleteSavingGoalAsync(Guid userId, Guid goalId, CancellationToken cancellationToken);
     Task<IReadOnlyList<GoalContributionResponse>?> GetGoalContributionsAsync(Guid userId, Guid goalId, CancellationToken cancellationToken);
     Task<GoalContributionResponse?> AddGoalContributionAsync(Guid userId, Guid goalId, CreateGoalContributionRequest request, CancellationToken cancellationToken);
+    Task<BudgetProgressResponse?> GetBudgetProgressAsync(Guid userId, Guid budgetId, CancellationToken cancellationToken);
+    Task<FinancialSummaryResponse> GetFinancialSummaryAsync(Guid userId, FinancialSummaryQuery query, CancellationToken cancellationToken);
+    Task ProcessFinanceTransactionEventAsync(string routingKey, FinanceTransactionEvent financeEvent, CancellationToken cancellationToken);
 }
 
