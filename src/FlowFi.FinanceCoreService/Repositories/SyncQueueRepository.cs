@@ -13,7 +13,7 @@ public class SyncQueueRepository : ISyncQueueRepository
         _dbContext = dbContext;
     }
 
-    public async Task<IReadOnlyList<SyncQueueItem>> GetAllAsync(
+    public async Task<IReadOnlyList<SyncQueue>> GetAllAsync(
         CancellationToken cancellationToken = default)
     {
         return await _dbContext.SyncQueue
@@ -22,7 +22,7 @@ public class SyncQueueRepository : ISyncQueueRepository
             .ToListAsync(cancellationToken);
     }
 
-    public Task<SyncQueueItem?> GetByIdAsync(
+    public Task<SyncQueue?> GetByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default)
     {
@@ -31,8 +31,8 @@ public class SyncQueueRepository : ISyncQueueRepository
             .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
     }
 
-    public async Task<SyncQueueItem> AddAsync(
-        SyncQueueItem item,
+    public async Task<SyncQueue> AddAsync(
+        SyncQueue item,
         CancellationToken cancellationToken = default)
     {
         await _dbContext.SyncQueue.AddAsync(item, cancellationToken);
@@ -40,7 +40,7 @@ public class SyncQueueRepository : ISyncQueueRepository
     }
 
     public Task UpdateAsync(
-        SyncQueueItem item,
+        SyncQueue item,
         CancellationToken cancellationToken = default)
     {
         _dbContext.SyncQueue.Update(item);

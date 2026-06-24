@@ -27,7 +27,7 @@ public class SyncQueueService : ISyncQueueService
         CreateSyncQueueDto request,
         CancellationToken cancellationToken = default)
     {
-        var item = new SyncQueueItem
+        var item = new SyncQueue
         {
             Id = Guid.NewGuid(),
             UserId = request.UserId,
@@ -75,7 +75,7 @@ public class SyncQueueService : ISyncQueueService
         return true;
     }
 
-    private static SyncQueueDto MapToDto(SyncQueueItem item)
+    private static SyncQueueDto MapToDto(SyncQueue item)
     {
         return new SyncQueueDto
         {

@@ -37,14 +37,15 @@ public class WalletsController : ControllerBase
         return wallet is null ? NotFound() : Ok(wallet);
     }
 
-    [HttpPost]
+    [HttpPost("{userId:guid}")]
     [ProducesResponseType(typeof(WalletDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<WalletDto>> Create(
+        Guid userId,
         CreateWalletDto request,
         CancellationToken cancellationToken)
     {
-        var wallet = await _walletService.CreateAsync(request, cancellationToken);
+        var wallet = await _walletService.CreateAsync(userId, request, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = wallet.Id }, wallet);
     }
 

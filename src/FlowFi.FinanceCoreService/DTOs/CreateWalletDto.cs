@@ -4,9 +4,6 @@ namespace FlowFi.FinanceCoreService.DTOs;
 
 public class CreateWalletDto
 {
-    [Required]
-    public Guid UserId { get; set; }
-
     [Required, StringLength(100)]
     public string Name { get; set; } = string.Empty;
 
@@ -18,7 +15,5 @@ public class CreateWalletDto
 
     [Required, StringLength(10)]
     public string Currency { get; set; } = string.Empty;
-
-    public bool IsActive { get; set; } = true;
 }
 

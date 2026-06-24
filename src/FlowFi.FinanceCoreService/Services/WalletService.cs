@@ -31,6 +31,7 @@ public class WalletService : IWalletService
     }
 
     public async Task<WalletDto> CreateAsync(
+        Guid userId,
         CreateWalletDto request,
         CancellationToken cancellationToken = default)
     {
@@ -38,12 +39,12 @@ public class WalletService : IWalletService
         var wallet = new Wallet
         {
             Id = Guid.NewGuid(),
-            UserId = request.UserId,
+            UserId = userId,
             Name = request.Name.Trim(),
             WalletType = request.WalletType.Trim(),
             Balance = request.Balance,
             Currency = request.Currency.Trim().ToUpperInvariant(),
-            IsActive = request.IsActive,
+            IsActive = true,
             CreatedAt = now,
             UpdatedAt = now
         };
