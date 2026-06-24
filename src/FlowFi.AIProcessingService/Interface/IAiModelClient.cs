@@ -16,4 +16,8 @@ public interface IAiModelClient
         string contentType,
         string? mockTranscribedText,
         CancellationToken cancellationToken);
+
+    Task<AiTextExtractionResultDto> AnalyzeVoiceTransactionAsync(
+        string transcriptText,
+        CancellationToken cancellationToken);
 }

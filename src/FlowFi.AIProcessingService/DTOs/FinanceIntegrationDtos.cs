@@ -29,8 +29,5 @@ public sealed record ImageTransactionResponseDto(
     Guid AiRequestId,
     Guid? AiResultId,
     string ImageUrl,
-    string RawText,
-    ParsedAiTransactionDto ParsedData,
-    FinanceTagDto Tag,
-    bool TagCreated,
-    FinanceTransactionDto Transaction);
+    ImageAnalysisDto Analysis,
+    IReadOnlyList<FinanceTransactionCreationResultDto> CreatedTransactions);

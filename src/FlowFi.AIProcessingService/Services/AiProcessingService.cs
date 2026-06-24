@@ -85,7 +85,7 @@ public sealed class AiProcessingService(
                 image.ContentType,
                 mockExtractedText,
                 cancellationToken);
-            var parsedData = receiptParserService.Parse(extractionResult.Text);
+            var analysis = receiptParserService.ParseImageAnalysis(extractionResult.Text);
             var imagePath = await fileStorageService.SaveAsync(
                 imageBytes,
                 image.FileName,
@@ -103,11 +103,14 @@ public sealed class AiProcessingService(
             var result = new AiProcessingResult
             {
                 RequestId = request.Id,
-                Amount = parsedData.Amount,
-                TransactionType = parsedData.TransactionType,
-                Tag = parsedData.Tag,
-                TransactionDate = parsedData.TransactionDate,
-                RawResponse = parsedData.RawText
+                Amount = SumAmounts(analysis.Transactions),
+                TransactionType = SingleValueOrNull(analysis.Transactions.Select(item => item.TransactionType)),
+                Tag = SingleValueOrNull(analysis.Transactions.Select(item => item.Tag)),
+                TransactionDate = analysis.Transactions
+                    .Where(item => item.TransactionDate.HasValue)
+                    .Select(item => item.TransactionDate)
+                    .FirstOrDefault(),
+                RawResponse = analysis.RawResponse
             };
 
             repository.AddResult(result);
@@ -118,8 +121,7 @@ public sealed class AiProcessingService(
                 result.Id,
                 request.Status,
                 imagePath,
-                parsedData.RawText,
-                parsedData);
+                analysis);
         }
         catch
         {
@@ -145,8 +147,8 @@ public sealed class AiProcessingService(
         {
             UserId = userId,
             InputType = "AUDIO",
-            RequestType = "VOICE_TO_TEXT",
-            Status = "PROCESSING",
+            RequestType = "VOICE_TO_TRANSACTION",
+            Status = "PENDING",
             CreatedAt = DatabaseTimestampNow()
         };
 
@@ -155,13 +157,23 @@ public sealed class AiProcessingService(
 
         try
         {
+            request.Status = "PROCESSING";
+            repository.UpdateRequest(request);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+
             var transcription = await aiModelClient.TranscribeVoiceAsync(
                 audioBytes,
                 voice.FileName,
                 voice.ContentType,
                 mockTranscribedText,
                 cancellationToken);
-            var parsedData = receiptParserService.Parse(transcription.Text);
+            var analysisResult = await aiModelClient.AnalyzeVoiceTransactionAsync(
+                transcription.Text,
+                cancellationToken);
+            var analysis = receiptParserService.ParseVoiceAnalysis(analysisResult.Text);
+            var analyzedTransaction = analysis.Transactions.SingleOrDefault()
+                ?? throw new InvalidOperationException("AI_NO_FINANCIAL_TRANSACTION_FOUND");
+            var parsedData = analyzedTransaction.ToParsedTransaction();
             var voiceUrl = await fileStorageService.SaveAsync(
                 audioBytes,
                 voice.FileName,
@@ -182,7 +194,7 @@ public sealed class AiProcessingService(
                 TransactionType = parsedData.TransactionType,
                 Tag = parsedData.Tag,
                 TransactionDate = parsedData.TransactionDate,
-                RawResponse = parsedData.RawText
+                RawResponse = analysis.RawResponse
             };
 
             repository.AddResult(result);
@@ -193,8 +205,9 @@ public sealed class AiProcessingService(
                 result.Id,
                 request.Status,
                 voiceUrl,
-                parsedData.RawText,
-                parsedData);
+                transcription.Text.Trim(),
+                parsedData,
+                analysis);
         }
         catch
         {
@@ -209,5 +222,38 @@ public sealed class AiProcessingService(
     private static DateTime DatabaseTimestampNow()
     {
         return DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
+    }
+
+    public async Task<string> TranscribeVoiceAsync(
+        IFormFile voice,
+        CancellationToken cancellationToken)
+    {
+        await using var audioStream = new MemoryStream();
+        await voice.CopyToAsync(audioStream, cancellationToken);
+        var transcription = await aiModelClient.TranscribeVoiceAsync(
+            audioStream.ToArray(),
+            voice.FileName,
+            voice.ContentType,
+            null,
+            cancellationToken);
+        return transcription.Text.Trim();
+    }
+
+    private static decimal? SumAmounts(IReadOnlyList<ImageAnalyzedTransactionDto> transactions)
+    {
+        var amounts = transactions
+            .Where(item => item.Amount.HasValue)
+            .Select(item => item.Amount!.Value)
+            .ToArray();
+        return amounts.Length == 0 ? null : amounts.Sum();
+    }
+
+    private static string? SingleValueOrNull(IEnumerable<string?> values)
+    {
+        var distinctValues = values
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        return distinctValues.Length == 1 ? distinctValues[0] : null;
     }
 }

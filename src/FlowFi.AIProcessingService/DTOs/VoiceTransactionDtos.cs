@@ -25,7 +25,8 @@ public sealed record VoiceAiResponseDto(
     string Status,
     string VoiceUrl,
     string RawText,
-    ParsedAiTransactionDto ParsedData);
+    ParsedAiTransactionDto ParsedData,
+    VoiceAnalysisDto Analysis);
 
 public sealed record VoiceTransactionResponseDto(
     Guid AiRequestId,
@@ -33,6 +34,7 @@ public sealed record VoiceTransactionResponseDto(
     string VoiceUrl,
     string RawText,
     ParsedAiTransactionDto ParsedData,
+    VoiceAnalysisDto Analysis,
     FinanceTagDto Tag,
     bool TagCreated,
     FinanceTransactionDto Transaction);

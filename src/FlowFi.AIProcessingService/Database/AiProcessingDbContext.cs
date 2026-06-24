@@ -17,7 +17,7 @@ public sealed class AiProcessingDbContext(DbContextOptions<AiProcessingDbContext
             entity.ToTable("ai_processing_request", table =>
             {
                 table.HasCheckConstraint("chk_ai_request_input_type", "input_type IN ('AUDIO', 'IMAGE', 'TEXT')");
-                table.HasCheckConstraint("chk_ai_request_type", "request_type IN ('VOICE_TO_TEXT', 'OCR', 'SPENDING_ANALYSIS')");
+                table.HasCheckConstraint("chk_ai_request_type", "request_type IN ('VOICE_TO_TEXT', 'VOICE_TO_TRANSACTION', 'OCR', 'SPENDING_ANALYSIS')");
                 table.HasCheckConstraint("chk_ai_request_status", "status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED')");
             });
 

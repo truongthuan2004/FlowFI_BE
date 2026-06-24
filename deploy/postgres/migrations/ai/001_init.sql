@@ -13,7 +13,7 @@ CREATE TABLE ai_processing_request (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP,
     CONSTRAINT chk_ai_request_input_type CHECK (input_type IN ('AUDIO', 'IMAGE', 'TEXT')),
-    CONSTRAINT chk_ai_request_type CHECK (request_type IN ('VOICE_TO_TEXT', 'OCR', 'SPENDING_ANALYSIS')),
+    CONSTRAINT chk_ai_request_type CHECK (request_type IN ('VOICE_TO_TEXT', 'VOICE_TO_TRANSACTION', 'OCR', 'SPENDING_ANALYSIS')),
     CONSTRAINT chk_ai_request_status CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'))
 );
 
