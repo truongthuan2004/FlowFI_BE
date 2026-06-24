@@ -42,6 +42,11 @@ public class TransactionService : ITransactionService
             return new CreateTransactionResult(CreateTransactionStatus.InvalidWalletId);
         }
 
+        if (request.Amount <= 0)
+        {
+            return new CreateTransactionResult(CreateTransactionStatus.InvalidAmount);
+        }
+
         var type = request.Type.Trim().ToUpperInvariant();
         if (type is not ("INCOME" or "EXPENSE"))
         {
@@ -117,7 +122,7 @@ public class TransactionService : ITransactionService
                 OldBalance = oldBalance,
                 ChangeAmount = balanceChange,
                 NewBalance = newBalance,
-                Reason = transaction.Type,
+                Reason = "TRANSACTION_CREATED",
                 CreatedAt = transaction.CreatedAt
             };
 
