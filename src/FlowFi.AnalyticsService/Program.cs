@@ -3,7 +3,7 @@ using FlowFi.AnalyticsService.Database;
 using FlowFi.Common.Configuration;
 using FlowFi.Common.Middleware;
 using FlowFi.Common.OpenApi;
-using Microsoft.EntityFrameworkCore;
+using FlowFi.Common.Persistence;
 
 EnvironmentFile.Load("ANALYTICS");
 
@@ -13,12 +13,7 @@ builder.Services.AddAnalyticsService(builder.Configuration);
 
 var app = builder.Build();
 
-if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
-{
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<AnalyticsDbContext>();
-    await db.Database.MigrateAsync();
-}
+await app.MigrateDatabaseOnStartupAsync<AnalyticsDbContext>();
 
 app.UseFlowFiErrorHandling();
 app.UseFlowFiCorrelationId();

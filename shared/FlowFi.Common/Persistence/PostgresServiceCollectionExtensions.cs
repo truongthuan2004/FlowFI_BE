@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,5 +21,20 @@ public static class PostgresServiceCollectionExtensions
             .UseSnakeCaseNamingConvention());
         services.AddHealthChecks().AddNpgSql(connectionString, name: "postgres");
         return services;
+    }
+
+    public static async Task MigrateDatabaseOnStartupAsync<TContext>(
+        this WebApplication app,
+        CancellationToken cancellationToken = default)
+        where TContext : DbContext
+    {
+        if (!app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
+        {
+            return;
+        }
+
+        await using var scope = app.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<TContext>();
+        await db.Database.MigrateAsync(cancellationToken);
     }
 }

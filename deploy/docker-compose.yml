@@ -120,6 +120,7 @@ services:
     environment:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Default: Host=auth-db;Port=5432;Database=${AUTH_DB_NAME:-FlowFi_AuthUser};Username=${POSTGRES_USER:?POSTGRES_USER is required};Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      Database__MigrateOnStartup: "true"
       RabbitMq__Host: rabbitmq
       RabbitMq__Username: ${RABBITMQ_USER:?RABBITMQ_USER is required}
       RabbitMq__Password: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD is required}

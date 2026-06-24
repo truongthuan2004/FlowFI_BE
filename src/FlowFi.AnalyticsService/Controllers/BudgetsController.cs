@@ -24,6 +24,13 @@ public sealed class BudgetsController(IAnalyticsService analyticsService) : Cont
         return budget is null ? NotFound() : Ok(budget);
     }
 
+    [HttpGet("{id:guid}/progress")]
+    public async Task<ActionResult<BudgetProgressResponse>> GetProgress(Guid id, CancellationToken cancellationToken)
+    {
+        var progress = await analyticsService.GetBudgetProgressAsync(User.UserId(), id, cancellationToken);
+        return progress is null ? NotFound() : Ok(progress);
+    }
+
     [HttpPost]
     public async Task<ActionResult<BudgetResponse>> Create(CreateBudgetRequest request, CancellationToken cancellationToken)
     {

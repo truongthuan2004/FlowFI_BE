@@ -21,7 +21,7 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbC
         // Refresh Tokens
         modelBuilder.Entity<RefreshToken>().ToTable("refresh_tokens").HasKey(x => x.Id);
         modelBuilder.Entity<RefreshToken>()
-            .HasOne<RefreshToken>()
+            .HasOne<User>()
             .WithMany()
             .HasForeignKey(x => x.UserId)
             .OnDelete(DeleteBehavior.Cascade);
@@ -29,7 +29,7 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbC
         // Password Reset Tokens
         modelBuilder.Entity<PasswordResetToken>().ToTable("password_reset_tokens").HasKey(x => x.Id);
         modelBuilder.Entity<PasswordResetToken>()
-            .HasOne<PasswordResetToken>()
+            .HasOne<User>()
             .WithMany()
             .HasForeignKey(x => x.UserId)
             .OnDelete(DeleteBehavior.Cascade);
@@ -37,7 +37,7 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbC
         // User Devices
         modelBuilder.Entity<UserDevice>().ToTable("user_devices").HasKey(x => x.Id);
         modelBuilder.Entity<UserDevice>()
-            .HasOne<UserDevice>()
+            .HasOne<User>()
             .WithMany()
             .HasForeignKey(x => x.UserId)
             .OnDelete(DeleteBehavior.Cascade);
@@ -45,7 +45,7 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbC
         // User Logs
         modelBuilder.Entity<UserLog>().ToTable("user_logs").HasKey(x => x.Id);
         modelBuilder.Entity<UserLog>()
-            .HasOne<UserLog>()
+            .HasOne<User>()
             .WithMany()
             .HasForeignKey(x => x.UserId)
             .OnDelete(DeleteBehavior.Cascade);

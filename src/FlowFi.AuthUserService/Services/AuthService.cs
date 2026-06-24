@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
 using FlowFi.AuthUserService.DTOs;
 using FlowFi.AuthUserService.Entities;
 using FlowFi.AuthUserService.Interface;
@@ -101,9 +102,9 @@ public sealed class AuthService(
 
     public async Task LogoutAsync(LogoutRequest request, CancellationToken cancellationToken)
     {
+        var token = await users.GetRefreshTokenAsync(request.RefreshToken, cancellationToken);
         await users.RevokeRefreshTokenAsync(request.RefreshToken, cancellationToken);
 
-        var token = await users.GetRefreshTokenAsync(request.RefreshToken, cancellationToken);
         if (token is not null)
         {
             await AddUserLogAsync(token.UserId, "LOGOUT", "SUCCESS", null, null, null, cancellationToken);
@@ -123,7 +124,7 @@ public sealed class AuthService(
             Id = Guid.NewGuid(),
             UserId = user.Id,
             Token = Guid.NewGuid().ToString("N"),
-            OtpCode = new Random().Next(100000, 999999).ToString(),
+            OtpCode = RandomNumberGenerator.GetInt32(100000, 1_000_000).ToString("D6"),
             ExpiresAt = DateTimeOffset.UtcNow.Add(PasswordResetTokenLifetime),
             IsUsed = false,
             CreatedAt = DateTimeOffset.UtcNow

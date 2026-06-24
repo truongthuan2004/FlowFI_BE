@@ -1,7 +1,9 @@
 using FlowFi.AuthUserService.Config;
+using FlowFi.AuthUserService.Database;
 using FlowFi.Common.Configuration;
 using FlowFi.Common.Middleware;
 using FlowFi.Common.OpenApi;
+using FlowFi.Common.Persistence;
 
 EnvironmentFile.Load("AUTH");
 
@@ -14,6 +16,8 @@ builder.Logging.AddDebug();
 builder.Services.AddAuthService(builder.Configuration);
 
 var app = builder.Build();
+
+await app.MigrateDatabaseOnStartupAsync<AuthDbContext>();
 
 app.UseFlowFiErrorHandling();
 app.UseFlowFiCorrelationId();
