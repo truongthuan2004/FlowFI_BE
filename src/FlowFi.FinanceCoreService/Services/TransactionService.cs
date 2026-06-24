@@ -1,4 +1,5 @@
-﻿using FlowFi.FinanceCoreService.DTOs;
+using System.Text.Json;
+using FlowFi.FinanceCoreService.DTOs;
 using FlowFi.FinanceCoreService.Entities;
 using FlowFi.FinanceCoreService.Repositories;
 
@@ -7,13 +8,25 @@ namespace FlowFi.FinanceCoreService.Services;
 public class TransactionService : ITransactionService
 {
     private readonly ITransactionRepository _transactionRepository;
+    private readonly IWalletRepository _walletRepository;
+    private readonly ITagRepository _tagRepository;
+    private readonly IWalletBalanceLogRepository _walletBalanceLogRepository;
+    private readonly IFinanceAuditRepository _financeAuditRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public TransactionService(
         ITransactionRepository transactionRepository,
+        IWalletRepository walletRepository,
+        ITagRepository tagRepository,
+        IWalletBalanceLogRepository walletBalanceLogRepository,
+        IFinanceAuditRepository financeAuditRepository,
         IUnitOfWork unitOfWork)
     {
         _transactionRepository = transactionRepository;
+        _walletRepository = walletRepository;
+        _tagRepository = tagRepository;
+        _walletBalanceLogRepository = walletBalanceLogRepository;
+        _financeAuditRepository = financeAuditRepository;
         _unitOfWork = unitOfWork;
     }
 
@@ -59,18 +72,90 @@ public class TransactionService : ITransactionService
             "EXPENSE" => -request.Amount,
             _ => throw new InvalidOperationException("Unsupported transaction type.")
         };
+
         var result = await _unitOfWork.ExecuteInTransactionAsync(async () =>
         {
-            var creationResult = await _transactionRepository.CreateAsync(
-                transaction,
-                balanceChange,
+            var wallet = await _walletRepository.GetForUpdateAsync(
+                transaction.WalletId,
                 cancellationToken);
-            if (creationResult.Status == TransactionCreationStatus.Success)
+            if (wallet is null || wallet.UserId != transaction.UserId)
             {
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                return new TransactionCreationResult(TransactionCreationStatus.WalletNotFound);
             }
 
-            return creationResult;
+            if (!wallet.IsActive)
+            {
+                return new TransactionCreationResult(TransactionCreationStatus.WalletInactive);
+            }
+
+            var tag = await _tagRepository.GetByIdAsync(transaction.TagId, cancellationToken);
+            if (tag is null || tag.UserId != transaction.UserId)
+            {
+                return new TransactionCreationResult(TransactionCreationStatus.TagNotFound);
+            }
+
+            if (!string.Equals(tag.Type, transaction.Type, StringComparison.OrdinalIgnoreCase))
+            {
+                return new TransactionCreationResult(TransactionCreationStatus.TagTypeMismatch);
+            }
+
+            var oldBalance = wallet.Balance;
+            var newBalance = oldBalance + balanceChange;
+            if (newBalance < 0)
+            {
+                return new TransactionCreationResult(TransactionCreationStatus.InsufficientBalance);
+            }
+
+            wallet.Balance = newBalance;
+            wallet.UpdatedAt = transaction.CreatedAt;
+
+            var balanceLog = new WalletBalanceLog
+            {
+                Id = Guid.NewGuid(),
+                WalletId = wallet.Id,
+                TransactionId = transaction.Id,
+                OldBalance = oldBalance,
+                ChangeAmount = balanceChange,
+                NewBalance = newBalance,
+                Reason = transaction.Type,
+                CreatedAt = transaction.CreatedAt
+            };
+
+            var auditLog = new FinanceAuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = transaction.UserId,
+                EntityType = "TRANSACTION",
+                EntityId = transaction.Id,
+                Action = "CREATE",
+                OldData = null,
+                NewData = JsonSerializer.SerializeToDocument(new
+                {
+                    transaction.Id,
+                    transaction.UserId,
+                    transaction.WalletId,
+                    transaction.TagId,
+                    transaction.Amount,
+                    transaction.Type,
+                    transaction.Title,
+                    transaction.Note,
+                    transaction.Source,
+                    transaction.SyncStatus,
+                    transaction.TransactionDate,
+                    OldBalance = oldBalance,
+                    NewBalance = newBalance
+                }),
+                CreatedAt = transaction.CreatedAt
+            };
+
+            await _transactionRepository.AddAsync(transaction, cancellationToken);
+            await _walletBalanceLogRepository.AddAsync(balanceLog, cancellationToken);
+            await _financeAuditRepository.AddAsync(auditLog, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return new TransactionCreationResult(
+                TransactionCreationStatus.Success,
+                transaction);
         }, cancellationToken);
 
         return result.Status switch
@@ -111,4 +196,3 @@ public class TransactionService : ITransactionService
         };
     }
 }
-

@@ -31,6 +31,34 @@ public class WalletRepository : IWalletRepository
             .FirstOrDefaultAsync(wallet => wallet.Id == id, cancellationToken);
     }
 
+    public Task<Wallet?> GetTrackedByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Wallets
+            .FirstOrDefaultAsync(wallet => wallet.Id == id, cancellationToken);
+    }
+
+    public Task<Wallet?> GetForUpdateAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Wallets
+            .FromSqlInterpolated($"SELECT * FROM wallets WHERE id = {id} FOR UPDATE")
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Wallet>> GetForUpdateAsync(
+        IReadOnlyCollection<Guid> ids,
+        CancellationToken cancellationToken = default)
+    {
+        var walletIds = ids.Distinct().ToArray();
+        return await _dbContext.Wallets
+            .FromSqlInterpolated(
+                $"SELECT * FROM wallets WHERE id = ANY({walletIds}) ORDER BY id FOR UPDATE")
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<Wallet> AddAsync(
         Wallet wallet,
         CancellationToken cancellationToken = default)
