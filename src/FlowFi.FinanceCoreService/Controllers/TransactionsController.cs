@@ -1,5 +1,6 @@
 using FlowFi.Common.Api;
 using FlowFi.FinanceCoreService.DTOs;
+using FlowFi.FinanceCoreService.Interface;
 using FlowFi.FinanceCoreService.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +9,7 @@ namespace FlowFi.FinanceCoreService.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("api/wallets/{walletId:guid}/transactions")]
+[Route("api/transactions")]
 public class TransactionsController : ControllerBase
 {
     private readonly ITransactionService _transactionService;
@@ -25,8 +26,7 @@ public class TransactionsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<TransactionDto>> Create(
-        Guid walletId,
-        CreateTransactionDto request,
+        CreateTransactionRequest request,
         CancellationToken cancellationToken)
     {
         var userId = User.UserId();
@@ -38,22 +38,24 @@ public class TransactionsController : ControllerBase
             });
         }
 
-        if (walletId == Guid.Empty)
+        if (request.WalletId == Guid.Empty)
         {
             return BadRequest(new { message = "WalletId must be a valid non-empty UUID." });
         }
 
         var result = await _transactionService.CreateAsync(
             userId,
-            walletId,
+            request.WalletId,
             request,
-            null,
+            request.TransactionDate,
             cancellationToken);
 
         return result.Status switch
         {
             CreateTransactionStatus.InvalidWalletId =>
                 BadRequest(new { message = "WalletId must be a valid non-empty UUID." }),
+            CreateTransactionStatus.InvalidAmount =>
+                BadRequest(new { message = "Amount must be greater than zero." }),
             CreateTransactionStatus.InvalidTransactionType =>
                 BadRequest(new { message = "Transaction type must be INCOME or EXPENSE." }),
             CreateTransactionStatus.WalletNotFound =>

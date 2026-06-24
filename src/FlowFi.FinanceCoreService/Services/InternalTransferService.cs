@@ -1,4 +1,5 @@
-﻿using FlowFi.FinanceCoreService.DTOs;
+using System.Text.Json;
+using FlowFi.FinanceCoreService.DTOs;
 using FlowFi.FinanceCoreService.Entities;
 using FlowFi.FinanceCoreService.Repositories;
 
@@ -7,24 +8,39 @@ namespace FlowFi.FinanceCoreService.Services;
 public class InternalTransferService : IInternalTransferService
 {
     private readonly IInternalTransferRepository _transferRepository;
+    private readonly IWalletRepository _walletRepository;
+    private readonly IWalletBalanceLogRepository _walletBalanceLogRepository;
+    private readonly IFinanceAuditRepository _financeAuditRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public InternalTransferService(
         IInternalTransferRepository transferRepository,
+        IWalletRepository walletRepository,
+        IWalletBalanceLogRepository walletBalanceLogRepository,
+        IFinanceAuditRepository financeAuditRepository,
         IUnitOfWork unitOfWork)
     {
         _transferRepository = transferRepository;
+        _walletRepository = walletRepository;
+        _walletBalanceLogRepository = walletBalanceLogRepository;
+        _financeAuditRepository = financeAuditRepository;
         _unitOfWork = unitOfWork;
     }
 
     public async Task<CreateInternalTransferResult> CreateAsync(
-        CreateInternalTransferDto request,
+        CreateTransferRequest request,
         CancellationToken cancellationToken = default)
     {
         if (request.FromWalletId == request.ToWalletId)
         {
             return new CreateInternalTransferResult(
                 CreateInternalTransferStatus.SameWallet);
+        }
+
+        if (request.Amount <= 0)
+        {
+            return new CreateInternalTransferResult(
+                CreateInternalTransferStatus.InvalidAmount);
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -44,16 +60,103 @@ public class InternalTransferService : IInternalTransferService
 
         var result = await _unitOfWork.ExecuteInTransactionAsync(async () =>
         {
-            var creationResult = await _transferRepository.CreateAsync(
-                transfer,
+            var wallets = await _walletRepository.GetForUpdateAsync(
+                [transfer.FromWalletId, transfer.ToWalletId],
                 cancellationToken);
-            if (creationResult.Status == InternalTransferCreationStatus.Success)
+
+            var sourceWallet = wallets.SingleOrDefault(
+                wallet => wallet.Id == transfer.FromWalletId &&
+                          wallet.UserId == transfer.UserId);
+            if (sourceWallet is null)
             {
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                return new InternalTransferCreationResult(
+                    InternalTransferCreationStatus.SourceWalletNotFound);
             }
 
-            return creationResult;
+            var destinationWallet = wallets.SingleOrDefault(
+                wallet => wallet.Id == transfer.ToWalletId &&
+                          wallet.UserId == transfer.UserId);
+            if (destinationWallet is null)
+            {
+                return new InternalTransferCreationResult(
+                    InternalTransferCreationStatus.DestinationWalletNotFound);
+            }
+
+            if (sourceWallet.Balance < transfer.Amount)
+            {
+                return new InternalTransferCreationResult(
+                    InternalTransferCreationStatus.InsufficientBalance);
+            }
+
+            var sourceOldBalance = sourceWallet.Balance;
+            var destinationOldBalance = destinationWallet.Balance;
+            sourceWallet.Balance -= transfer.Amount;
+            destinationWallet.Balance += transfer.Amount;
+            sourceWallet.UpdatedAt = transfer.CreatedAt;
+            destinationWallet.UpdatedAt = transfer.CreatedAt;
+
+            var sourceBalanceLog = new WalletBalanceLog
+            {
+                Id = Guid.NewGuid(),
+                WalletId = sourceWallet.Id,
+                TransferId = transfer.Id,
+                OldBalance = sourceOldBalance,
+                ChangeAmount = -transfer.Amount,
+                NewBalance = sourceWallet.Balance,
+                Reason = "TRANSFER_OUT",
+                CreatedAt = transfer.CreatedAt
+            };
+
+            var destinationBalanceLog = new WalletBalanceLog
+            {
+                Id = Guid.NewGuid(),
+                WalletId = destinationWallet.Id,
+                TransferId = transfer.Id,
+                OldBalance = destinationOldBalance,
+                ChangeAmount = transfer.Amount,
+                NewBalance = destinationWallet.Balance,
+                Reason = "TRANSFER_IN",
+                CreatedAt = transfer.CreatedAt
+            };
+
+            var auditLog = new FinanceAuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = transfer.UserId,
+                EntityType = "INTERNAL_TRANSFER",
+                EntityId = transfer.Id,
+                Action = "CREATE",
+                OldData = null,
+                NewData = JsonSerializer.SerializeToDocument(new
+                {
+                    transfer.Id,
+                    transfer.UserId,
+                    transfer.FromWalletId,
+                    transfer.ToWalletId,
+                    transfer.Amount,
+                    transfer.Note,
+                    transfer.SyncStatus,
+                    transfer.TransferDate,
+                    SourceOldBalance = sourceOldBalance,
+                    SourceNewBalance = sourceWallet.Balance,
+                    DestinationOldBalance = destinationOldBalance,
+                    DestinationNewBalance = destinationWallet.Balance
+                }),
+                CreatedAt = transfer.CreatedAt
+            };
+
+            await _transferRepository.AddAsync(transfer, cancellationToken);
+            await _walletBalanceLogRepository.AddRangeAsync(
+                [sourceBalanceLog, destinationBalanceLog],
+                cancellationToken);
+            await _financeAuditRepository.AddAsync(auditLog, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return new InternalTransferCreationResult(
+                InternalTransferCreationStatus.Success,
+                transfer);
         }, cancellationToken);
+
         return result.Status switch
         {
             InternalTransferCreationStatus.SourceWalletNotFound =>
@@ -88,4 +191,3 @@ public class InternalTransferService : IInternalTransferService
         };
     }
 }
-

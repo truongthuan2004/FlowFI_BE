@@ -4,19 +4,19 @@ namespace FlowFi.FinanceCoreService.Repositories;
 
 public interface ISyncQueueRepository
 {
-    Task<IReadOnlyList<SyncQueueItem>> GetAllAsync(
+    Task<IReadOnlyList<SyncQueue>> GetAllAsync(
         CancellationToken cancellationToken = default);
 
-    Task<SyncQueueItem?> GetByIdAsync(
+    Task<SyncQueue?> GetByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default);
 
-    Task<SyncQueueItem> AddAsync(
-        SyncQueueItem item,
+    Task<SyncQueue> AddAsync(
+        SyncQueue item,
         CancellationToken cancellationToken = default);
 
     Task UpdateAsync(
-        SyncQueueItem item,
+        SyncQueue item,
         CancellationToken cancellationToken = default);
 }
 

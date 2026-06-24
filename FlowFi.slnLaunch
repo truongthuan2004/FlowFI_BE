@@ -13,6 +13,14 @@
       {
         "Path": "src\\FlowFi.AIProcessingService\\FlowFi.AIProcessingService.csproj",
         "Action": "Start"
+      },
+      {
+        "Path": "src\\FlowFi.AnalyticsService\\FlowFi.AnalyticsService.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\FlowFi.NotificationService\\FlowFi.NotificationService.csproj",
+        "Action": "Start"
       }
     ]
   },

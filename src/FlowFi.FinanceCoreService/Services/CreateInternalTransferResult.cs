@@ -6,6 +6,7 @@ public enum CreateInternalTransferStatus
 {
     Success,
     SameWallet,
+    InvalidAmount,
     SourceWalletNotFound,
     DestinationWalletNotFound,
     InsufficientBalance

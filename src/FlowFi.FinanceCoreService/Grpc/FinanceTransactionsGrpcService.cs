@@ -51,7 +51,7 @@ public sealed class FinanceTransactionsGrpcService(
     }
 
     public override async Task<CreateTransactionReply> CreateTransaction(
-        CreateTransactionRequest request,
+        FlowFi.GrpcContracts.Finance.CreateTransactionRequest request,
         ServerCallContext context)
     {
         var userId = GetUserId(context);

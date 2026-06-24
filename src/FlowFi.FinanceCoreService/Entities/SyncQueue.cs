@@ -1,9 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 
 namespace FlowFi.FinanceCoreService.Entities;
 
-public class SyncQueueItem
+public class SyncQueue
 {
     [Key] public Guid Id { get; set; }
     [Required] public Guid UserId { get; set; }
@@ -17,4 +17,3 @@ public class SyncQueueItem
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? SyncedAt { get; set; }
 }
-

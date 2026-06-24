@@ -5,7 +5,7 @@ namespace FlowFi.FinanceCoreService.Interface;
 public interface IInternalTransferService
 {
     Task<CreateInternalTransferResult> CreateAsync(
-        CreateInternalTransferDto request,
+        CreateTransferRequest request,
         CancellationToken cancellationToken = default);
 }
 

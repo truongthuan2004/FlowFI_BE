@@ -6,6 +6,7 @@ public enum CreateTransactionStatus
 {
     Success,
     InvalidWalletId,
+    InvalidAmount,
     InvalidTransactionType,
     WalletNotFound,
     WalletInactive,
