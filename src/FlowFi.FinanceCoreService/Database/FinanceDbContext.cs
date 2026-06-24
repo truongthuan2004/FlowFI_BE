@@ -50,7 +50,10 @@ public class FinanceDbContext : DbContext
     private static void ConfigureWallet(ModelBuilder modelBuilder)
     {
         var entity = modelBuilder.Entity<Wallet>();
-        entity.ToTable("wallets");
+        entity.ToTable("wallets", table =>
+            table.HasCheckConstraint(
+                "ck_wallets_wallet_type",
+                "wallet_type IN ('CASH', 'BANK', 'SAVING', 'INVESTMENT')"));
         entity.HasKey(x => x.Id);
         entity.Property(x => x.UserId).IsRequired();
         entity.Property(x => x.Name).HasMaxLength(100).IsRequired();
@@ -66,7 +69,10 @@ public class FinanceDbContext : DbContext
     private static void ConfigureTag(ModelBuilder modelBuilder)
     {
         var entity = modelBuilder.Entity<Tag>();
-        entity.ToTable("tags");
+        entity.ToTable("tags", table =>
+            table.HasCheckConstraint(
+                "ck_tags_type",
+                "type IN ('INCOME', 'EXPENSE')"));
         entity.HasKey(x => x.Id);
         entity.Property(x => x.UserId).IsRequired();
         entity.Property(x => x.Name).HasMaxLength(100).IsRequired();
@@ -81,7 +87,11 @@ public class FinanceDbContext : DbContext
     private static void ConfigureTransaction(ModelBuilder modelBuilder)
     {
         var entity = modelBuilder.Entity<Transaction>();
-        entity.ToTable("transactions");
+        entity.ToTable("transactions", table =>
+        {
+            table.HasCheckConstraint("ck_transactions_amount_positive", "amount > 0");
+            table.HasCheckConstraint("ck_transactions_type", "type IN ('INCOME', 'EXPENSE')");
+        });
         entity.HasKey(x => x.Id);
         entity.Property(x => x.UserId).IsRequired();
         entity.Property(x => x.WalletId).IsRequired();
@@ -113,9 +123,12 @@ public class FinanceDbContext : DbContext
     {
         var entity = modelBuilder.Entity<InternalTransfer>();
         entity.ToTable("internal_transfers", table =>
+        {
             table.HasCheckConstraint(
                 "ck_internal_transfers_distinct_wallets",
-                "from_wallet_id <> to_wallet_id"));
+                "from_wallet_id <> to_wallet_id");
+            table.HasCheckConstraint("ck_internal_transfers_amount_positive", "amount > 0");
+        });
         entity.HasKey(x => x.Id);
         entity.Property(x => x.UserId).IsRequired();
         entity.Property(x => x.FromWalletId).IsRequired();
@@ -188,7 +201,11 @@ public class FinanceDbContext : DbContext
     private static void ConfigureRecurringTransaction(ModelBuilder modelBuilder)
     {
         var entity = modelBuilder.Entity<RecurringTransaction>();
-        entity.ToTable("recurring_transactions");
+        entity.ToTable("recurring_transactions", table =>
+        {
+            table.HasCheckConstraint("ck_recurring_transactions_amount_positive", "amount > 0");
+            table.HasCheckConstraint("ck_recurring_transactions_type", "type IN ('INCOME', 'EXPENSE')");
+        });
         entity.HasKey(x => x.Id);
         entity.Property(x => x.UserId).IsRequired();
         entity.Property(x => x.WalletId).IsRequired();
