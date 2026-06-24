@@ -11,6 +11,7 @@ public sealed class FinanceTransactionCreationService(
     public async Task<FinanceTransactionCreationResultDto> CreateAsync(
         Guid walletId,
         ParsedAiTransactionDto parsedData,
+        string? suggestedTitle,
         string bearerToken,
         CancellationToken cancellationToken)
     {
@@ -39,7 +40,7 @@ public sealed class FinanceTransactionCreationService(
             walletId,
             tag.Id,
             parsedData,
-            BuildTitle(tag.Name, parsedData.RawText),
+            BuildTitle(suggestedTitle, tag.Name, parsedData.RawText),
             bearerToken,
             cancellationToken);
 
@@ -112,8 +113,14 @@ public sealed class FinanceTransactionCreationService(
             _ => (transactionType == "INCOME" ? "Other income" : "Other expense", "tag", "#64748B")
         };
 
-    private static string BuildTitle(string tagName, string rawText)
+    private static string BuildTitle(string? suggestedTitle, string tagName, string rawText)
     {
+        var aiTitle = suggestedTitle?.Trim();
+        if (!string.IsNullOrWhiteSpace(aiTitle))
+        {
+            return aiTitle.Length <= 150 ? aiTitle : aiTitle[..150];
+        }
+
         var firstLine = rawText
             .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
             .Select(line => line.Trim())

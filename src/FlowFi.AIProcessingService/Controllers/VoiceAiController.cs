@@ -14,9 +14,30 @@ namespace FlowFi.AIProcessingService.Controllers;
 [Route("api/ai-processing/voices")]
 public sealed class VoiceAiController(
     IVoiceTransactionService voiceTransactionService,
+    IAiProcessingService aiProcessingService,
     IOptions<AudioUploadOptions> audioUploadOptions) : ControllerBase
 {
     private readonly AudioUploadOptions _audioUploadOptions = audioUploadOptions.Value;
+
+    [HttpPost("transcriptions")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(25 * 1024 * 1024)]
+    [ProducesResponseType(typeof(VoiceTranscriptionResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Transcribe(
+        [FromForm] VoiceTranscriptionUploadDto dto,
+        CancellationToken cancellationToken)
+    {
+        var validationError = ValidateVoice(dto.Voice);
+        if (validationError is not null)
+        {
+            return BadRequest(new { message = validationError });
+        }
+
+        var transcript = await aiProcessingService.TranscribeVoiceAsync(dto.Voice, cancellationToken);
+        return Ok(new VoiceTranscriptionResponseDto(transcript));
+    }
 
     [HttpPost("transactions")]
     [Consumes("multipart/form-data")]

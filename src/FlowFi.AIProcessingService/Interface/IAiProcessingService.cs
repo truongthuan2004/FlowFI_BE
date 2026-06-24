@@ -11,5 +11,6 @@ public interface IAiProcessingService
     Task<AiProcessingResult?> GetResultByRequestIdAsync(Guid requestId, CancellationToken cancellationToken);
     Task<AiProcessingResult> CreateResultAsync(CreateAiProcessingResultDto dto, CancellationToken cancellationToken);
     Task<ImageAiResponseDto> ProcessImageAsync(Guid userId, IFormFile image, string? mockExtractedText, CancellationToken cancellationToken);
+    Task<string> TranscribeVoiceAsync(IFormFile voice, CancellationToken cancellationToken);
     Task<VoiceAiResponseDto> ProcessVoiceAsync(Guid userId, IFormFile voice, string? mockTranscribedText, CancellationToken cancellationToken);
 }

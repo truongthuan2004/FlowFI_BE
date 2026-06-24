@@ -5,5 +5,4 @@ public sealed record ImageAiResponseDto(
     Guid? ResultId,
     string Status,
     string ImageUrl,
-    string RawText,
-    ParsedAiTransactionDto ParsedData);
+    ImageAnalysisDto Analysis);

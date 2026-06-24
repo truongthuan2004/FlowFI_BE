@@ -248,8 +248,12 @@ services:
       Jwt__Issuer: ${JWT_ISSUER:-FlowFi}
       Jwt__Audience: ${JWT_AUDIENCE:-FlowFi.Clients}
       Jwt__SigningKey: ${JWT_SIGNING_KEY:?JWT_SIGNING_KEY is required}
+      VoiceRealtime__AiServiceBaseUrl: http://ai-service:8080
     ports:
       - "5106:8080"
+    depends_on:
+      ai-service:
+        condition: service_started
 
   api-gateway:
     build:

@@ -10,4 +10,6 @@ public sealed class AiProviderOptions
     public int TimeoutSeconds { get; set; } = 30;
     public string ReasoningEffort { get; set; } = "low";
     public string Verbosity { get; set; } = "low";
+    public decimal MinimumImageConfidence { get; set; } = 0.70m;
+    public decimal MinimumTransactionConfidence { get; set; } = 0.70m;
 }

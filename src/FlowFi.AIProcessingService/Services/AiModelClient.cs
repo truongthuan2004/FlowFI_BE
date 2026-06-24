@@ -40,20 +40,27 @@ public sealed class AiModelClient(HttpClient httpClient, IOptions<AiProviderOpti
         var payload = new
         {
             model = _options.Model,
-            input = new[]
+            input = new object[]
             {
+                new
+                {
+                    role = "developer",
+                    content = new object[]
+                    {
+                        new { type = "input_text", text = AiPrompts.ImageTextExtraction }
+                    }
+                },
                 new
                 {
                     role = "user",
                     content = new object[]
                     {
-                        new { type = "input_text", text = AiPrompts.ImageTextExtraction },
                         new { type = "input_image", image_url = dataUrl }
                     }
                 }
             },
             reasoning = new { effort = _options.ReasoningEffort },
-            text = new { verbosity = _options.Verbosity }
+            text = BuildImageAnalysisTextConfiguration()
         };
 
         return await SendAsync(payload, cancellationToken);
@@ -104,6 +111,47 @@ public sealed class AiModelClient(HttpClient httpClient, IOptions<AiProviderOpti
         return await SendAsync(payload, cancellationToken);
     }
 
+    public async Task<AiTextExtractionResultDto> AnalyzeVoiceTransactionAsync(
+        string transcriptText,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(transcriptText))
+        {
+            throw new InvalidOperationException("AI_EMPTY_TRANSCRIPT");
+        }
+
+        EnsureProviderConfiguration();
+        httpClient.Timeout = TimeSpan.FromSeconds(_options.TimeoutSeconds);
+
+        var payload = new
+        {
+            model = _options.Model,
+            input = new object[]
+            {
+                new
+                {
+                    role = "developer",
+                    content = new object[]
+                    {
+                        new { type = "input_text", text = AiPrompts.VoiceTransactionAnalysis }
+                    }
+                },
+                new
+                {
+                    role = "user",
+                    content = new object[]
+                    {
+                        new { type = "input_text", text = transcriptText.Trim() }
+                    }
+                }
+            },
+            reasoning = new { effort = _options.ReasoningEffort },
+            text = BuildVoiceAnalysisTextConfiguration()
+        };
+
+        return await SendAsync(payload, cancellationToken);
+    }
+
     private async Task<AiTextExtractionResultDto> SendAsync(object payload, CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, BuildResponsesEndpoint())
@@ -125,6 +173,139 @@ public sealed class AiModelClient(HttpClient httpClient, IOptions<AiProviderOpti
         var baseUrl = _options.BaseUrl.TrimEnd('/');
         var path = _options.ResponsesPath.StartsWith('/') ? _options.ResponsesPath : $"/{_options.ResponsesPath}";
         return new Uri($"{baseUrl}{path}");
+    }
+
+    private object BuildImageAnalysisTextConfiguration()
+    {
+        return new
+        {
+            verbosity = _options.Verbosity,
+            format = new
+            {
+                type = "json_schema",
+                name = "flowfi_image_analysis",
+                strict = true,
+                schema = new
+                {
+                    type = "object",
+                    additionalProperties = false,
+                    required = new[] { "imageType", "confidence", "transactions", "warnings" },
+                    properties = new
+                    {
+                        imageType = new
+                        {
+                            type = "string",
+                            @enum = new[] { "RECEIPT", "BANK_TRANSFER", "NOTE", "UNKNOWN" }
+                        },
+                        confidence = new { type = "number", minimum = 0, maximum = 1 },
+                        transactions = new
+                        {
+                            type = "array",
+                            items = new
+                            {
+                                type = "object",
+                                additionalProperties = false,
+                                required = new[]
+                                {
+                                    "title", "amount", "type", "tagName", "tagType", "note",
+                                    "transactionDate", "merchantName", "rawText", "confidence"
+                                },
+                                properties = new
+                                {
+                                    title = new { type = "string" },
+                                    amount = new { type = "number", exclusiveMinimum = 0 },
+                                    type = new
+                                    {
+                                        type = "string",
+                                        @enum = new[] { "EXPENSE", "INCOME", "TRANSFER", "UNKNOWN" }
+                                    },
+                                    tagName = new { type = "string" },
+                                    tagType = new
+                                    {
+                                        type = "string",
+                                        @enum = new[] { "EXPENSE", "INCOME" }
+                                    },
+                                    note = new { type = "string" },
+                                    transactionDate = new { type = new[] { "string", "null" } },
+                                    merchantName = new { type = new[] { "string", "null" } },
+                                    rawText = new { type = "string" },
+                                    confidence = new { type = "number", minimum = 0, maximum = 1 }
+                                }
+                            }
+                        },
+                        warnings = new
+                        {
+                            type = "array",
+                            items = new { type = "string" }
+                        }
+                    }
+                }
+            }
+        };
+    }
+
+    private object BuildVoiceAnalysisTextConfiguration()
+    {
+        return new
+        {
+            verbosity = _options.Verbosity,
+            format = new
+            {
+                type = "json_schema",
+                name = "flowfi_voice_transaction",
+                strict = true,
+                schema = new
+                {
+                    type = "object",
+                    additionalProperties = false,
+                    required = new[] { "inputType", "transactions", "warnings" },
+                    properties = new
+                    {
+                        inputType = new { type = "string", @enum = new[] { "VOICE" } },
+                        transactions = new
+                        {
+                            type = "array",
+                            maxItems = 1,
+                            items = new
+                            {
+                                type = "object",
+                                additionalProperties = false,
+                                required = new[]
+                                {
+                                    "title", "amount", "type", "tagName", "tagType", "note",
+                                    "transactionDate", "rawText", "confidence"
+                                },
+                                properties = new
+                                {
+                                    title = new { type = "string" },
+                                    amount = new { type = "number", exclusiveMinimum = 0 },
+                                    type = new
+                                    {
+                                        type = "string",
+                                        @enum = new[] { "EXPENSE", "INCOME", "TRANSFER", "UNKNOWN" }
+                                    },
+                                    tagName = new { type = "string" },
+                                    tagType = new
+                                    {
+                                        type = "string",
+                                        @enum = new[] { "EXPENSE", "INCOME" }
+                                    },
+                                    note = new { type = "string" },
+                                    transactionDate = new { type = new[] { "string", "null" } },
+                                    rawText = new { type = "string" },
+                                    confidence = new { type = "number", minimum = 0, maximum = 1 }
+                                }
+                            }
+                        },
+                        warnings = new
+                        {
+                            type = "array",
+                            items = new { type = "string" }
+                        }
+                    }
+                }
+            }
+        };
     }
 
     private static bool IsMeaningfulMockText(string? value)
