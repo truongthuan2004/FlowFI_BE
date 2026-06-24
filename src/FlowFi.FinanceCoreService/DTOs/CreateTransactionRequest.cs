@@ -4,6 +4,8 @@ namespace FlowFi.FinanceCoreService.DTOs;
 
 public class CreateTransactionRequest : IValidatableObject
 {
+    public Guid WalletId { get; set; }
+
     public Guid TagId { get; set; }
 
     [Range(typeof(decimal), "0.01", "9999999999999999.99")]
@@ -25,6 +27,13 @@ public class CreateTransactionRequest : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        if (WalletId == Guid.Empty)
+        {
+            yield return new ValidationResult(
+                "WalletId must be a valid non-empty UUID.",
+                [nameof(WalletId)]);
+        }
+
         if (TagId == Guid.Empty)
         {
             yield return new ValidationResult(

@@ -33,7 +33,7 @@ public class TransactionService : ITransactionService
     public async Task<CreateTransactionResult> CreateAsync(
         Guid userId,
         Guid walletId,
-        CreateTransactionDto request,
+        CreateTransactionRequest request,
         DateTimeOffset? transactionDate,
         CancellationToken cancellationToken = default)
     {

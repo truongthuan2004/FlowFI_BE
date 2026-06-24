@@ -28,13 +28,19 @@ public class InternalTransferService : IInternalTransferService
     }
 
     public async Task<CreateInternalTransferResult> CreateAsync(
-        CreateInternalTransferDto request,
+        CreateTransferRequest request,
         CancellationToken cancellationToken = default)
     {
         if (request.FromWalletId == request.ToWalletId)
         {
             return new CreateInternalTransferResult(
                 CreateInternalTransferStatus.SameWallet);
+        }
+
+        if (request.Amount <= 0)
+        {
+            return new CreateInternalTransferResult(
+                CreateInternalTransferStatus.InvalidAmount);
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -97,7 +103,7 @@ public class InternalTransferService : IInternalTransferService
                 OldBalance = sourceOldBalance,
                 ChangeAmount = -transfer.Amount,
                 NewBalance = sourceWallet.Balance,
-                Reason = "INTERNAL_TRANSFER_OUT",
+                Reason = "TRANSFER_OUT",
                 CreatedAt = transfer.CreatedAt
             };
 
@@ -109,7 +115,7 @@ public class InternalTransferService : IInternalTransferService
                 OldBalance = destinationOldBalance,
                 ChangeAmount = transfer.Amount,
                 NewBalance = destinationWallet.Balance,
-                Reason = "INTERNAL_TRANSFER_IN",
+                Reason = "TRANSFER_IN",
                 CreatedAt = transfer.CreatedAt
             };
 

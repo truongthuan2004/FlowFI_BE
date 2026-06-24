@@ -7,7 +7,7 @@ public interface ITransactionService
     Task<CreateTransactionResult> CreateAsync(
         Guid userId,
         Guid walletId,
-        CreateTransactionDto request,
+        CreateTransactionRequest request,
         DateTimeOffset? transactionDate,
         CancellationToken cancellationToken = default);
 }
